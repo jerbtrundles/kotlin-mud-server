@@ -1,0 +1,303 @@
+[
+  {
+    "name": "goblin",
+    "keywords": [],
+    "level": 1,
+    "experience": 5,
+    "gold": 5,
+    "attributes": {
+      "strength": 5,
+      "intelligence": 5,
+      "vitality": 5,
+      "speed": 5,
+      "defense": 0,
+      "health": 5,
+      "magic": 0
+    }
+  },
+  {
+    "name": "lesser orc",
+    "keywords": [
+      "orc"
+    ],
+    "level": 2,
+    "experience": 8,
+    "gold": 12,
+    "attributes": {
+      "strength": 10,
+      "intelligence": 5,
+      "vitality": 10,
+      "speed": 5,
+      "defense": 5,
+      "health": 10,
+      "magic": 0
+    }
+  },
+  {
+    "name": "black widow spider",
+    "keywords": ["spider","black widow"],
+    "level": 6,
+    "experience": 60,
+    "gold": 25,
+    "attributes": {
+      "strength": 14,
+      "intelligence": 3,
+      "vitality": 12,
+      "speed": 9,
+      "defense": 9,
+      "health": 45,
+      "magic": 0
+    }
+  },
+  {
+    "name": "fire dragon",
+    "keywords": [
+      "dragon"
+    ],
+    "level": 10,
+    "experience": 500,
+    "gold": 1000,
+    "attributes": {
+      "strength": 25,
+      "intelligence": 20,
+      "vitality": 20,
+      "speed": 15,
+      "defense": 20,
+      "health": 50,
+      "magic": 50
+    }
+  },
+  {
+    "name": "skeleton warrior",
+    "keywords": [
+      "skeleton", "warrior"
+    ],
+    "level": 5,
+    "experience": 30,
+    "gold": 10,
+    "attributes": {
+      "strength": 10,
+      "intelligence": 2,
+      "vitality": 8,
+      "speed": 5,
+      "defense": 8,
+      "health": 40,
+      "magic": 0
+    }
+  },
+  {
+    "name": "necromancer",
+    "keywords": [
+      "necromancer"
+    ],
+    "level": 8,
+    "experience": 75,
+    "gold": 50,
+    "attributes": {
+      "strength": 5,
+      "intelligence": 15,
+      "vitality": 10,
+      "speed": 5,
+      "defense": 5,
+      "health": 30,
+      "magic": 20
+    }
+  },
+  {
+    "name": "giant spider",
+    "keywords": [
+      "spider", "giant"
+    ],
+    "level": 7,
+    "experience": 50,
+    "gold": 40,
+    "attributes": {
+      "strength": 15,
+      "intelligence": 2,
+      "vitality": 12,
+      "speed": 10,
+      "defense": 8,
+      "health": 50,
+      "magic": 0
+    }
+  },
+  {
+    "name": "minotaur",
+    "keywords": [
+      "minotaur"
+    ],
+    "level": 9,
+    "experience": 120,
+    "gold": 75,
+    "attributes": {
+      "strength": 20,
+      "intelligence": 10,
+      "vitality": 15,
+      "speed": 12,
+      "defense": 15,
+      "health": 50,
+      "magic": 0
+    }
+  },
+  {
+    "name": "cyclops",
+    "keywords": [],
+    "level": 8,
+    "experience": 75,
+    "gold": 50,
+    "attributes": {
+      "strength": 20,
+      "intelligence": 10,
+      "vitality": 15,
+      "speed": 8,
+      "defense": 15,
+      "health": 50,
+      "magic": 0
+    }
+  },
+  {
+    "name": "phoenix",
+    "keywords": [],
+    "level": 9,
+    "experience": 120,
+    "gold": 75,
+    "attributes": {
+      "strength": 15,
+      "intelligence": 15,
+      "vitality": 15,
+      "speed": 15,
+      "defense": 15,
+      "health": 50,
+      "magic": 20
+    }
+  },
+  {
+    "name": "centaur",
+    "keywords": [],
+    "level": 7,
+    "experience": 50,
+    "gold": 40,
+    "attributes": {
+      "strength": 15,
+      "intelligence": 10,
+      "vitality": 15,
+      "speed": 20,
+      "defense": 10,
+      "health": 40,
+      "magic": 0
+    }
+  },
+  {
+    "name": "giant minotaur",
+    "keywords": ["minotaur"],
+    "level": 12,
+    "experience": 300,
+    "gold": 100,
+    "attributes": {
+      "strength": 20,
+      "intelligence": 10,
+      "vitality": 15,
+      "speed": 15,
+      "defense": 15,
+      "health": 60,
+      "magic": 0
+    }
+  },
+  {
+    "name": "gorgon",
+    "keywords": [],
+    "level": 8,
+    "experience": 100,
+    "gold": 50,
+    "attributes": {
+      "strength": 10,
+      "intelligence": 15,
+      "vitality": 10,
+      "speed": 10,
+      "defense": 5,
+      "health": 40,
+      "magic": 20
+    }
+  },
+  {
+    "name": "frost centaur",
+    "keywords": ["centaur"],
+    "level": 10,
+    "experience": 200,
+    "gold": 75,
+    "attributes": {
+      "strength": 15,
+      "intelligence": 12,
+      "vitality": 15,
+      "speed": 20,
+      "defense": 12,
+      "health": 40,
+      "magic": 10
+    }
+  },
+  {
+    "name": "shadow demon",
+    "keywords": ["demon"],
+    "level": 14,
+    "experience": 400,
+    "gold": 125,
+    "attributes": {
+      "strength": 20,
+      "intelligence": 20,
+      "vitality": 20,
+      "speed": 15,
+      "defense": 15,
+      "health": 30,
+      "magic": 25
+    }
+  },
+  {
+    "name": "dryad",
+    "keywords": [],
+    "level": 6,
+    "experience": 50,
+    "gold": 30,
+    "attributes": {
+      "strength": 10,
+      "intelligence": 12,
+      "vitality": 10,
+      "speed": 15,
+      "defense": 10,
+      "health": 15,
+      "magic": 20
+    }
+  },
+  {
+    "name": "lich",
+    "keywords": [],
+    "level": 20,
+    "experience": 1000,
+    "gold": 250,
+    "attributes": {
+      "strength": 15,
+      "intelligence": 30,
+      "vitality": 15,
+      "speed": 15,
+      "defense": 20,
+      "health": 35,
+      "magic": 35
+    }
+  },
+  {
+    "name": "werewolf",
+    "keywords": [],
+    "level": 9,
+    "experience": 150,
+    "gold": 75,
+    "attributes": {
+      "strength": 25,
+      "intelligence": 8,
+      "vitality": 20,
+      "speed": 20,
+      "defense": 15,
+      "health": 25,
+      "magic": 0
+    }
+  }
+
+]

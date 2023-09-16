@@ -1,0 +1,221 @@
+[
+  {
+    "room-id": 0,
+    "room-coordinates": "0, 0, 0",
+    "room-description": "This is the northwest room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 1",
+        "connection-input": "go east"
+      },
+      {
+        "connection-coordinates": "0, 0, 3",
+        "connection-input": "go south"
+      },
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go southeast"
+      }
+    ]
+  },
+  {
+    "room-id": 1,
+    "room-coordinates": "0, 0, 1",
+    "room-description": "This is the north room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 0",
+        "connection-input": "go west"
+      },
+      {
+        "connection-coordinates": "0, 0, 2",
+        "connection-input": "go east"
+      },
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go south"
+      }
+    ]
+  },
+  {
+    "room-id": 2,
+    "room-coordinates": "0, 0, 2",
+    "room-description": "This is the northeast room. Trun's dull weapons is here.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 1",
+        "connection-input": "go west"
+      },
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go southwest"
+      },
+      {
+        "connection-coordinates": "0, 0, 5",
+        "connection-input": "go south"
+      },
+      {
+        "connection-coordinates": "0, 1, 0",
+        "connection-input": "go shop"
+      }
+    ]
+  },
+  {
+    "room-id": 3,
+    "room-coordinates": "0, 0, 3",
+    "room-description": "This is the west room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 0",
+        "connection-input": "go north"
+      },
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go east"
+      },
+      {
+        "connection-coordinates": "0, 0, 6",
+        "connection-input": "go south"
+      }
+    ]
+  },
+  {
+    "room-id": 4,
+    "room-coordinates": "0, 0, 4",
+    "room-description": "This is the central room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 0",
+        "connection-input": "go northwest"
+      },
+      {
+        "connection-coordinates": "0, 0, 1",
+        "connection-input": "go north"
+      },
+      {
+        "connection-coordinates": "0, 0, 2",
+        "connection-input": "go northeast"
+      },
+      {
+        "connection-coordinates": "0, 0, 3",
+        "connection-input": "go west"
+      },
+      {
+        "connection-coordinates": "0, 0, 5",
+        "connection-input": "go east"
+      },
+      {
+        "connection-coordinates": "0, 0, 6",
+        "connection-input": "go southwest"
+      },
+      {
+        "connection-coordinates": "0, 0, 7",
+        "connection-input": "go south"
+      },
+      {
+        "connection-coordinates": "0, 0, 8",
+        "connection-input": "go southeast"
+      }
+    ]
+  },
+  {
+    "room-id": 5,
+    "room-coordinates": "0, 0, 5",
+    "room-description": "This is the east room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 2",
+        "connection-input": "go north"
+      },
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go west"
+      },
+      {
+        "connection-coordinates": "0, 0, 8",
+        "connection-input": "go south"
+      }
+    ]
+  },
+  {
+    "room-id": 6,
+    "room-coordinates": "0, 0, 6",
+    "room-description": "This is the southwest room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 3",
+        "connection-input": "go north"
+      },
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go northeast"
+      },
+      {
+        "connection-coordinates": "0, 0, 7",
+        "connection-input": "go east"
+      }
+    ]
+  },
+  {
+    "room-id": 7,
+    "room-coordinates": "0, 0, 7",
+    "room-description": "This is the south room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go north"
+      },
+      {
+        "connection-coordinates": "0, 0, 6",
+        "connection-input": "go west"
+      },
+      {
+        "connection-coordinates": "0, 0, 8",
+        "connection-input": "go east"
+      }
+    ]
+  },
+  {
+    "room-id": 8,
+    "room-coordinates": "0, 0, 8",
+    "room-description": "This is the southeast room.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 4",
+        "connection-input": "go northwest"
+      },
+      {
+        "connection-coordinates": "0, 0, 5",
+        "connection-input": "go north"
+      },
+      {
+        "connection-coordinates": "0, 0, 7",
+        "connection-input": "go west"
+      }
+    ]
+  },
+
+  {
+    "room-id": 9,
+    "room-coordinates": "0, 1, 0",
+    "room-description": "This is the weapons shop.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 2",
+        "connection-input": "go out"
+      }
+    ]
+  },
+
+  {
+    "room-id": 10,
+    "room-coordinates": "0, 2, 0",
+    "room-description": "This is the bank.",
+    "room-connections": [
+      {
+        "connection-coordinates": "0, 0, 3",
+        "connection-input": "go out"
+      }
+    ]
+  }
+]

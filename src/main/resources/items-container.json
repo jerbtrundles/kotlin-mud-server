@@ -1,0 +1,22 @@
+[
+  {
+    "name": "small pouch",
+    "description": "It's a small pouch.",
+    "weight": 1.5,
+    "value": 10,
+    "keywords": [
+      "pouch",
+      "small pouch"
+    ]
+  },
+  {
+    "name": "large backpack",
+    "description": "It's a large backpack.",
+    "weight": 0.1,
+    "value": 50,
+    "keywords": [
+      "backpack",
+      "large backpack"
+    ]
+  }
+]

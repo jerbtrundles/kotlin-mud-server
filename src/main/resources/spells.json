@@ -1,0 +1,41 @@
+[
+  {
+    "name": "fire",
+    "attributes": [
+      {
+        "type": "DAMAGE-FIRE",
+        "min-damage": 5,
+        "max-damage": 10
+      }
+    ],
+    "attack-strings": [
+      "Flames leap from your fingers, burning the !target for !damage damage."
+    ]
+  },
+  {
+    "name": "ice",
+    "attributes": [
+      {
+        "type": "DAMAGE-ICE",
+        "min-damage": 5,
+        "max-damage": 10
+      }
+    ],
+    "attack-strings": [
+      "Shards of ice hurtle toward the !target, hitting for !damage damage."
+    ]
+  },
+  {
+    "name": "bolt",
+    "attributes": [
+      {
+        "type": "DAMAGE-LIGHTNING",
+        "min-damage": 5,
+        "max-damage": 10
+      }
+    ],
+    "attack-strings": [
+      "A bolt of lightning arcs between you and the !target, hitting for !damage damage."
+    ]
+  }
+]

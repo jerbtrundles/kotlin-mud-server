@@ -1,0 +1,22 @@
+[
+  {
+    "name": "leather armor",
+    "description": "It's some leather armor.",
+    "weight": 4.0,
+    "value": 15,
+    "defense": 10,
+    "keywords": [
+      "armor"
+    ]
+  },
+  {
+    "name": "half plate",
+    "description": "It's some half plate.",
+    "weight": 40.0,
+    "value": 30,
+    "defense": 20,
+    "keywords": [
+      "plate"
+    ]
+  }
+]

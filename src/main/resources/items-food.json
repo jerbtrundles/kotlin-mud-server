@@ -1,0 +1,66 @@
+[
+  {
+    "name": "roast leg of lamb",
+    "description": "It's a roasted leg of lamb.",
+    "weight": 2.0,
+    "value": 10,
+    "bites": 5,
+    "keywords": [
+      "leg of lamb",
+      "leg",
+      "lamb"
+    ]
+  },
+  {
+    "name": "apple pie",
+    "description": "It's a lovely apple pie.",
+    "weight": 2.0,
+    "value": 10,
+    "bites": 3,
+    "keywords": [
+      "pie"
+    ]
+  },
+  {
+    "name": "baked salmon",
+    "description": "It's some baked salmon, with a crispy skin and juicy meat.",
+    "weight": 1.5,
+    "value": 8,
+    "bites": 4,
+    "keywords": ["salmon"]
+  },
+  {
+    "name": "elven bread",
+    "description": "It's a delicately flavored bread made by the elves. It's said to have a hint of magic in every bite.",
+    "weight": 0.5,
+    "value": 15,
+    "bites": 3,
+    "keywords": ["bread"]
+  },
+  {
+    "name": "dragon steak",
+    "description": "It's a steak from the meat of a dragon, said to have a unique and powerful flavor.",
+    "weight": 1.5,
+    "value": 25,
+    "bites": 4,
+    "keywords": ["steak"]
+  },
+  {
+    "name": "giant's stew",
+    "description": "It's a hearty stew made from the meat of giant creatures. It's said to give strength to those who eat it.",
+    "weight": 2.5,
+    "value": 18,
+    "bites": 7,
+    "keywords": ["stew"]
+  },
+  {
+    "name": "unicorn roast",
+    "description": "It's a roast made from the meat of a unicorn, it's said to have the power to heal and restore vitality.",
+    "weight": 2,
+    "value": 30,
+    "bites": 5,
+    "keywords": ["roast"]
+  }
+
+
+]

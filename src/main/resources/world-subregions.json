@@ -1,0 +1,20 @@
+[
+  {
+    "region-id": 0,
+    "region-name": "The Town",
+    "region-subregions": [
+      {
+        "subregion-id": 0,
+        "subregion-name": "Town Square"
+      },
+      {
+        "subregion-id": 1,
+        "subregion-name": "Trun's dull weapons"
+      },
+      {
+        "subregion-id": 2,
+        "subregion-name": "Town Bank"
+      }
+    ]
+  }
+]

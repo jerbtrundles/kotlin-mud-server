@@ -1,0 +1,25 @@
+[
+  {
+    "name": "small glass of water",
+    "description": "It's a small glass of water.",
+    "weight": 0.5,
+    "value": 2,
+    "quaffs": 3,
+    "keywords": [
+      "glass of water",
+      "water",
+      "glass",
+      "small glass"
+    ]
+  },
+  {
+    "name": "potion of nothing special",
+    "description": "It's a potion of nothing special.",
+    "weight": 0.5,
+    "value": 10,
+    "quaffs": 5,
+    "keywords": [
+      "potion"
+    ]
+  }
+]

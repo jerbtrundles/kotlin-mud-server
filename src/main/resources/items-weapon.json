@@ -1,0 +1,32 @@
+[
+  {
+    "name": "crystal sword",
+    "description": "It's a crystal sword.",
+    "weight": 1.0,
+    "value": 15,
+    "power": 40,
+    "keywords": [
+      "sword"
+    ]
+  },
+  {
+    "name": "hand axe",
+    "description": "It's a hand axe.",
+    "weight": 4.0,
+    "value": 15,
+    "power": 30,
+    "keywords": [
+      "axe"
+    ]
+  },
+  {
+    "name": "copper sword",
+    "description": "It's a copper sword.",
+    "weight": 4.0,
+    "value": 15,
+    "power": 30,
+    "keywords": [
+      "sword"
+    ]
+  }
+]
