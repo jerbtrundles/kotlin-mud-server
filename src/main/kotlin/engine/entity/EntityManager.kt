@@ -1,6 +1,7 @@
 package engine.entity
 
 import debug.Debug
+import engine.Inventory
 import engine.utility.Common
 import engine.entity.behavior.EntityBehavior
 import engine.game.Game
@@ -54,7 +55,8 @@ object EntityManager {
         name = allNpcNames.random(),
         level = 1,
         job = allNpcJobs.random(),
-        behavior = EntityBehavior.defaultNpc
+        behavior = EntityBehavior.defaultNpc,
+        inventory = Inventory.createWithRandomStuff()
     )
 
     private fun createJanitor() = EntityFriendlyNpc(
@@ -76,7 +78,10 @@ object EntityManager {
         attributes = EntityAttributes.defaultBerserker
     )
 
-    private fun createRandomMonster() = EntityTemplates.monsterTemplates.random().create()
+    private fun createRandomMonster() = EntityTemplates
+        .monsterTemplates
+        .random()
+        .create(inventory = Inventory.createWithRandomStuff())
     // endregion
 
     // region remove entities

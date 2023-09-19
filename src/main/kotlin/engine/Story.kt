@@ -20,7 +20,7 @@ class Story(
 
     private fun playNext(player: Player, speaker: EntityBase) {
         if (!isDone()) {
-            player.sendMessage("${speaker.nameForStory} says \"${parts[index++]}\"")
+            player.sendToMe("${speaker.nameForStory} says \"${parts[index++]}\"")
         }
     }
 

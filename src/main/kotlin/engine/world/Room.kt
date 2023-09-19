@@ -106,14 +106,14 @@ open class Room(
 
     fun addPlayer(player: Player) {
         players.add(player)
-        announceToOthers(player, player.arriveString)
+        sendToOthers(player, player.arriveString)
     }
 
     fun removePlayer(player: Player, connection: Connection? = null) {
         players.remove(player)
         connection?.let {
-            announceToOthers(player, player.departString(connection))
-        } ?: announceToOthers(player, Message.PLAYER_LEAVES_GAME, player.name)
+            sendToOthers(player, player.departString(connection))
+        } ?: sendToOthers(player, Message.PLAYER_LEAVES_GAME, player.name)
     }
 
     fun firstLivingHostileToPlayerOrNull(keyword: String) =
@@ -135,9 +135,16 @@ open class Room(
 
     fun randomLivingPlayerOrNull() =
         players.filter { it.isAlive }.randomOrNull()
+
     fun randomLivingHostileOrNull(faction: EntityFaction) =
         entities.filter {
             it.faction.isHostileTo(faction)
+        }.randomOrNull()
+
+    fun randomLivingHostileOrNull(faction: EntityFaction, keyword: String) =
+        entities.filter {
+            it.faction.isHostileTo(faction)
+                    && it.matchesKeyword(keyword)
         }.randomOrNull()
 
     fun firstHostileToPlayerOrNull(keyword: String) =
@@ -146,8 +153,12 @@ open class Room(
                     && it.matchesKeyword(keyword)
         }
 
-    val containsWeapon
-        get() = inventory.items.any { it is ItemWeapon }
+    val containsWeapon get() = inventory.containsWeapon
+    val containsArmor get() = inventory.containsArmor
+    val containsFood get() = inventory.containsFood
+    val containsDrink get() = inventory.containsDrink
+    val containsJunk get() = inventory.containsJunk
+    val containsContainer get() = inventory.containsContainer
 
     // region uuid -> equality, hash code
     override fun hashCode() = uuid.hashCode()
@@ -162,26 +173,25 @@ open class Room(
         }
 
     fun announceToAll(message: Message, vararg tokens: String) =
-        players.forEach { player ->
-            player.sendToMe(message, *tokens)
-        }
+        announceToAll(Messages.get(message, *tokens))
 
-    fun announceToOthers(player: Player, message: Message, vararg tokens: String) =
-        players.filter { it != player }.forEach {
-            it.sendToMe(message, *tokens)
-        }
+    fun sendToOthers(announcingPlayer: Player, message: Message, vararg tokens: String) =
+        sendToOthers(announcingPlayer, Messages.get(message, *tokens))
 
-    fun announceToOthers(announcingPlayer: Player, str: String) =
+    fun sendToOthers(announcingPlayer: Player, str: String) =
         players.forEach {
             if (it != announcingPlayer) {
                 it.sendToMe(str)
             }
         }
 
-    fun announceToPlayer(player: Player, str: String) =
-        player.sendMessage(str)
-    fun announceToPlayer(player: Player, message: Message, vararg tokens: String) =
-        announceToPlayer(player, Messages.get(message, *tokens))
+    fun sendToAll(str: String) =
+        players.forEach {
+            it.sendToMe(str)
+        }
+
+    fun sendToAll(message: Message, vararg tokens: String) =
+        sendToAll(Messages.get(message, *tokens))
     // endregion
 }
 

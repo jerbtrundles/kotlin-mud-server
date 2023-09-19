@@ -1,6 +1,7 @@
 package engine.entity
 
 import debug.Debug
+import engine.Inventory
 import engine.entity.behavior.EntityBehavior
 
 class EntityFriendlyNpc(
@@ -14,6 +15,7 @@ class EntityFriendlyNpc(
     delayMin: Int = Debug.npcDelayMin,
     delayMax: Int = Debug.npcDelayMax,
     attributes: EntityAttributes = EntityAttributes.defaultNpc,
+    inventory: Inventory = Inventory.defaultNpc()
 ) : EntityBase(
     faction = EntityFaction.factionNpc,
     name = name,
@@ -26,7 +28,8 @@ class EntityFriendlyNpc(
     behavior = behavior,
     delayMin = delayMin,
     delayMax = delayMax,
-    arriveStringSuffix = arriveStringSuffix
+    arriveStringSuffix = arriveStringSuffix,
+    inventory = inventory
 ) {
     override val deadConversationalName
         get() = "the spirit of $randomName"
@@ -46,7 +49,7 @@ class EntityFriendlyNpc(
 
     // "$arriveName has arrived."
     override val arriveName: String
-        get() = randomName
+        get() = fullName
 
     // "$stringPrefix$deathName dies."
     override val deathName = nameWithJob

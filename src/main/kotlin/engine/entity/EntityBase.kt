@@ -11,10 +11,11 @@ import engine.entity.behavior.FlavorText
 import engine.game.Game
 import engine.game.MovementDirection
 import engine.item.*
+import engine.utility.appendLine
+import engine.utility.Common.d100
 import engine.world.Connection
 import engine.world.Room
 import engine.world.World
-import kotlin.random.Random
 
 abstract class EntityBase(
     val faction: EntityFaction,
@@ -29,11 +30,11 @@ abstract class EntityBase(
     val delayMax: Int,
     var weapon: ItemWeapon? = null,
     var armor: ItemArmor? = null,
+    val inventory: Inventory,
     val stringPrefix: String = "",
     val job: String = "",
-    val arriveStringSuffix: String = "walks in",
+    val arriveStringSuffix: String = "walks in"
 ) {
-    val inventory: Inventory = Inventory()
     var currentRoom: Room = World.void
     protected var posture: EntityPosture = EntityPosture.STANDING
     var hasNotBeenSearched = true
@@ -53,42 +54,53 @@ abstract class EntityBase(
     open val nameForStory = fullName
     val prefixedName
         get() = "$stringPrefix$fullName"
-    val capitalizedPrefixedName = prefixedName.replaceFirstChar { it.uppercase() }
+    val capitalizedPrefixedName
+        get() = prefixedName.replaceFirstChar { it.uppercase() }
     val prefixedRandomName
         get() = "$stringPrefix$randomName"
     val capitalizedPrefixedRandomName
         get() = prefixedRandomName.replaceFirstChar { it.uppercase() }
+    val capitalizedConversationalName
+        get() = conversationalName.replaceFirstChar { it.uppercase() }
     abstract val arriveName: String
     abstract val deathName: String
+    val capitalizedPrefixedDeathName
+        get() = "$stringPrefix$deathName"
     // endregion
 
     // region strings
     fun getString(item: ItemBase) =
-        "$prefixedRandomName picks up ${item.nameWithIndefiniteArticle}."
+        Messages.get(Message.ENTITY_PICKS_UP_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
 
     fun dropString(item: ItemBase) =
-        "$prefixedRandomName drops ${item.nameWithIndefiniteArticle}."
+        Messages.get(Message.ENTITY_DROPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
 
     fun dropString(inventory: Inventory) =
-        "$prefixedRandomName drops ${inventory.collectionString}."
+        Messages.get(Message.ENTITY_DROPS_ITEM, prefixedRandomName, inventory.collectionString)
 
     fun destroyString(item: ItemBase) =
-        "$prefixedRandomName destroys ${item.nameWithIndefiniteArticle}."
+        Messages.get(Message.ENTITY_DESTROYS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
 
-    val arriveString by lazy { "$arriveName $arriveStringSuffix." }
-    val deathString by lazy { "$stringPrefix$deathName dies." }
+    val arriveString
+        get() = Messages.get(Message.ENTITY_ARRIVES, arriveName, arriveStringSuffix)
+    val deathString
+        get() = Messages.get(Message.ENTITY_DIES, capitalizedPrefixedDeathName)
     val sitString
-        get() = "$capitalizedPrefixedRandomName sits down."
+        get() = Messages.get(Message.ENTITY_SITS, capitalizedPrefixedRandomName)
     val standString
-        get() = "$capitalizedPrefixedRandomName stands up."
+        get() = Messages.get(Message.ENTITY_STANDS_UP, capitalizedPrefixedRandomName)
     val kneelString
-        get() = "$capitalizedPrefixedRandomName kneels."
+        get() = Messages.get(Message.ENTITY_KNEELS, capitalizedPrefixedRandomName)
 
     fun departString(connection: Connection) =
         if (connection.direction != MovementDirection.NONE) {
             // The goblin heads east.
             // "$prefixedRandomName heads ${connection.direction.toString().lowercase()}."
-            Messages.get(Message.ENTITY_HEADS_DIRECTION, prefixedRandomName, connection.direction.toString().lowercase())
+            Messages.get(
+                Message.ENTITY_HEADS_DIRECTION,
+                prefixedRandomName,
+                connection.direction.toString().lowercase()
+            )
         } else if (connection.matchInputString.contains("gates")) {
             // TODO: make this better
             // TODO: other cases for climbing, other connection types
@@ -102,7 +114,9 @@ abstract class EntityBase(
         }
 
     fun putAwayString(item: ItemBase) = Messages.get(Message.ENTITY_PUTS_AWAY_ITEM, prefixedRandomName, item.name)
-    fun equipString(item: ItemBase) = Messages.get(Message.ENTITY_EQUIPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+    fun equipString(item: ItemBase) =
+        Messages.get(Message.ENTITY_EQUIPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+
     fun removeString(item: ItemBase) = Messages.get(Message.ENTITY_REMOVES_ITEM, prefixedRandomName, item.name)
     // endregion
 
@@ -134,8 +148,8 @@ abstract class EntityBase(
         }
 
     suspend fun doDelay() =
-        // TODO: make this based off of something else
-        //  e.g. entity speed, type
+    // TODO: make this based off of something else
+    //  e.g. entity speed, type
         // Debug.println("EntityMonster::doDelay()")
         Game.delayRandom(
             min = delayMin, max = delayMax,
@@ -171,10 +185,6 @@ abstract class EntityBase(
             doStand()
         } else {
             currentRoom.randomLivingPlayerOrNull()?.let { player ->
-                // already verified if evaluated as a situation
-                // TODO: can this method be called any other way?
-                //  if so, might need to add verification
-
                 // entity weapon
                 val weaponString = weapon?.name ?: "fists"
                 // entity attack
@@ -184,18 +194,23 @@ abstract class EntityBase(
                 // resultant damage
                 val damage = (attack - defense).coerceAtLeast(0)
 
-                announceToAll(Message.ENTITY_ATTACKS_PLAYER, prefixedName, weaponString)
+                with(StringBuilder()) {
+                    // TODO: quips at player
+                    appendLine(Message.ENTITY_ATTACKS_PLAYER, prefixedName, weaponString)
 
-                if (damage > 0) {
-                    announceToAll(Message.ENTITY_HITS_ENTITY_FOR_DAMAGE, damage.toString())
-                } else {
-                    announceToAll(Message.ENTITY_MISSES_ENTITY)
-                }
+                    if (damage > 0) {
+                        appendLine(Message.ENTITY_HITS_ENTITY_FOR_DAMAGE, damage.toString())
+                    } else {
+                        appendLine(Message.ENTITY_MISSES_ENTITY)
+                    }
 
-                player.attributes.currentHealth -= damage
-                if (player.attributes.currentHealth <= 0) {
-                    player.sendMessage(Message.PLAYER_DIES)
-                    announceToAll(Message.OTHER_PLAYER_DIES, player.name)
+                    player.attributes.currentHealth -= damage
+                    if (player.attributes.currentHealth <= 0) {
+                        player.sendToMe(Message.PLAYER_DIES)
+                        appendLine(Message.OTHER_PLAYER_DIES, player.name)
+                    }
+
+                    announceToAll(this)
                 }
             }
         }
@@ -211,21 +226,25 @@ abstract class EntityBase(
             // resultant damage
             val damage = (attack - defense).coerceAtLeast(0)
 
-            if (Random.nextInt() % 4 == 0) {
-                doQuipToEntity(randomLivingHostile)
-            }
+            with(StringBuilder()) {
+                d100(25) {
+                    appendLine(getQuip(randomLivingHostile))
+                }
 
-            announceToAll("$prefixedName swings at the ${randomLivingHostile.name} with their $weaponString.")
+                appendLine("$prefixedName swings at the ${randomLivingHostile.name} with their $weaponString.")
 
-            if (damage > 0) {
-                announceToAll("They hit for $damage damage.")
-            } else {
-                announceToAll("They miss!")
-            }
+                if (damage > 0) {
+                    appendLine("They hit for $damage damage.")
+                } else {
+                    appendLine("They miss!")
+                }
 
-            randomLivingHostile.attributes.currentHealth -= damage
-            if (randomLivingHostile.attributes.currentHealth <= 0) {
-                announceToAll(randomLivingHostile.deathString)
+                randomLivingHostile.attributes.currentHealth -= damage
+                if (randomLivingHostile.attributes.currentHealth <= 0) {
+                    appendLine(randomLivingHostile.deathString)
+                }
+
+                announceToAll(this)
             }
         }
 
@@ -234,20 +253,26 @@ abstract class EntityBase(
     fun doSearchRandomUnsearchedDeadHostile() =
         currentRoom.entities.filter { faction.isHostileTo(it.faction) && it.isDead && it.hasNotBeenSearched }
             .randomOrNull()?.let { deadHostile ->
-                announceToAll(Message.ENTITY_SEARCHES_DEAD_ENTITY, capitalizedPrefixedName, deadHostile.name)
+                // build and announce a single drop string out of weapon, armor, and other inventory items
+                with(StringBuilder()) {
+                    appendLine(Message.ENTITY_SEARCHES_DEAD_ENTITY, capitalizedPrefixedName, deadHostile.name)
 
-                deadHostile.weapon?.let {
-                    currentRoom.inventory.items.add(it)
-                    announceToAll("${deadHostile.prefixedName} drops ${it.nameWithIndefiniteArticle}.")
-                }
-                deadHostile.armor?.let {
-                    currentRoom.inventory.items.add(it)
-                    announceToAll("${deadHostile.prefixedName} drops ${it.nameWithIndefiniteArticle}.")
-                }
+                    deadHostile.weapon?.let {
+                        currentRoom.inventory.items.add(it)
+                        appendLine("${deadHostile.prefixedName} drops ${it.nameWithIndefiniteArticle}.")
+                    }
 
-                if (deadHostile.inventory.items.isNotEmpty()) {
-                    currentRoom.inventory.items.addAll(deadHostile.inventory.items)
-                    announceToAll(deadHostile.dropString(deadHostile.inventory))
+                    deadHostile.armor?.let {
+                        currentRoom.inventory.items.add(it)
+                        appendLine("${deadHostile.prefixedName} drops ${it.nameWithIndefiniteArticle}.")
+                    }
+
+                    if (deadHostile.inventory.items.isNotEmpty()) {
+                        currentRoom.inventory.items.addAll(deadHostile.inventory.items)
+                        appendLine(deadHostile.dropString(deadHostile.inventory))
+                    }
+
+                    announceToAll(this)
                 }
 
                 deadHostile.hasNotBeenSearched = false
@@ -267,60 +292,60 @@ abstract class EntityBase(
             doQuipToEntity(it)
         }
 
-    private fun doQuipToEntity(entity: EntityBase) =
-        when {
-            isAlive && entity.isAlive && isHostileTo(entity) -> doLivingQuipToLivingHostileEntity(entity)
-            isAlive && entity.isAlive -> doLivingQuipToLivingFriendlyEntity(entity)
-            isAlive && entity.isDead && isHostileTo(entity) -> doLivingQuipToDeadHostileEntity(entity)
-            isAlive && entity.isDead -> doLivingQuipToDeadFriendlyEntity(entity)
+    private fun doQuipToEntity(entity: EntityBase) = announceToAll(getQuip(entity))
+    private fun getQuip(entity: EntityBase) = when {
+        isAlive && entity.isAlive && isHostileTo(entity) -> getLivingToLivingHostileQuip(entity)
+        isAlive && entity.isAlive -> getLivingToLivingFriendlyQuip(entity)
+        isAlive && entity.isDead && isHostileTo(entity) -> getLivingToDeadHostileQuip(entity)
+        isAlive && entity.isDead -> getLivingToDeadFriendlyQuip(entity)
 
-            isDead && entity.isAlive && isHostileTo(entity) -> doDeadQuipToLivingHostileEntity(entity)
-            isDead && entity.isAlive -> doDeadQuipToLivingFriendlyEntity(entity)
-            isDead && entity.isDead && isHostileTo(entity) -> doDeadQuipToDeadHostileEntity(entity)
-            isDead && entity.isDead -> doDeadQuipToDeadFriendlyEntity(entity)
+        isDead && entity.isAlive && isHostileTo(entity) -> getDeadToLivingHostileQuip(entity)
+        isDead && entity.isAlive -> getDeadToLivingFriendlyQuip(entity)
+        isDead && entity.isDead && isHostileTo(entity) -> getDeadToDeadHostileQuip(entity)
+        isDead && entity.isDead -> getDeadToDeadFriendlyQuip(entity)
 
-            else -> {}
-        }
+        else -> ""
+    }
 
-    fun doDeadQuipToDeadHostileEntity(deadHostileEntity: EntityBase) =
-        announceToAll(
+    private fun getDeadToDeadHostileQuip(deadHostileEntity: EntityBase) =
+        Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
             prefixedRandomName,
             deadHostileEntity.conversationalName,
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_DEAD_HOSTILE_ENTITY)
         )
 
-    fun doDeadQuipToLivingHostileEntity(livingHostileEntity: EntityBase) =
-        announceToAll(
+    private fun getDeadToLivingHostileQuip(livingHostileEntity: EntityBase) =
+        Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
             prefixedRandomName,
             livingHostileEntity.conversationalName,
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_HOSTILE_ENTITY)
         )
 
-    fun doLivingQuipToDeadHostileEntity(deadHostileEntity: EntityBase) =
-        announceToAll(
+    private fun getLivingToDeadHostileQuip(deadHostileEntity: EntityBase) =
+        Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
             prefixedRandomName,
             deadHostileEntity.conversationalName,
             FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_DEAD_HOSTILE_ENTITY)
         )
 
-    fun doLivingQuipToLivingHostileEntity(livingHostileEntity: EntityBase) =
-        announceToAll(
+    private fun getLivingToLivingHostileQuip(livingHostileEntity: EntityBase) =
+        Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
             prefixedRandomName,
             livingHostileEntity.conversationalName,
             FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_LIVING_HOSTILE_ENTITY)
         )
 
-    private fun doLivingQuipToLivingFriendlyEntity(livingFriendlyEntity: EntityBase) =
+    private fun getLivingToLivingFriendlyQuip(livingFriendlyEntity: EntityBase) =
         if (livingFriendlyEntity == this) {
             // i'm alive and quipping to myself...
             // TODO: we can do better than this
-            doMumble()
+            Messages.get(Message.ENTITY_MUMBLES, prefixedRandomName)
         } else {
-            announceToAll(
+            Messages.get(
                 Message.ENTITY_SAYS_TO_ENTITY,
                 prefixedRandomName,
                 livingFriendlyEntity.conversationalName,
@@ -328,20 +353,24 @@ abstract class EntityBase(
             )
         }
 
-    private fun doLivingQuipToDeadFriendlyEntity(deadFriendlyEntity: EntityBase) =
-        announceToAll(
+    private fun getLivingToDeadFriendlyQuip(deadFriendlyEntity: EntityBase) =
+        Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
             prefixedRandomName,
             deadFriendlyEntity.deadConversationalName,
             FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_DEAD_FRIENDLY_ENTITY)
         )
 
-    private fun doDeadQuipToDeadFriendlyEntity(deadFriendlyEntity: EntityBase) =
+    private fun getDeadToDeadFriendlyQuip(deadFriendlyEntity: EntityBase) =
         if (deadFriendlyEntity == this) {
             // i'm dead and quipping to myself...
-            doDeadSoloQuip()
+            Messages.get(
+                Message.DEAD_ENTITY_QUIPS_SOLO,
+                deadConversationalName,
+                FlavorText.get(EntityAction.DEAD_QUIP_SOLO)
+            )
         } else {
-            announceToAll(
+            Messages.get(
                 Message.ENTITY_SAYS_TO_ENTITY,
                 prefixedRandomName,
                 deadFriendlyEntity.deadConversationalName,
@@ -349,17 +378,19 @@ abstract class EntityBase(
             )
         }
 
-    private fun doDeadQuipToLivingFriendlyEntity(livingFriendlyEntity: EntityBase) = announceToAll(
-        Message.ENTITY_SAYS_TO_ENTITY,
-        prefixedRandomName,
-        livingFriendlyEntity.randomName,
-        FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_FRIENDLY_ENTITY)
-    )
+    private fun getDeadToLivingFriendlyQuip(livingFriendlyEntity: EntityBase) =
+        Messages.get(
+            Message.ENTITY_SAYS_TO_ENTITY,
+            prefixedRandomName,
+            livingFriendlyEntity.randomName,
+            FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_FRIENDLY_ENTITY)
+        )
 
     fun doMumble() = announceToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
 
     fun say(what: String) = announceToAll(Message.ENTITY_SAYS, prefixedRandomName, what)
 
+    fun announceToAll(sb: StringBuilder) = announceToAll(sb.trim('\n').toString())
     fun announceToAll(what: String) = currentRoom.announceToAll(what)
     fun announceToAll(message: Message, vararg tokens: String) =
         currentRoom.announceToAll(Messages.get(message, *tokens))
@@ -373,19 +404,28 @@ abstract class EntityBase(
         }
     }
 
-    private fun doFindAndEquipAnyWeapon() {
-        currentRoom.inventory.getAndRemoveRandomWeaponOrNull()?.let { foundWeapon ->
-            weapon?.let { oldWeapon ->
-                announceToAll(dropString(oldWeapon))
-                currentRoom.inventory.items.add(oldWeapon)
+    private fun doFindAndEquipAnyWeapon() =
+        // check personal inventory first
+        (inventory.getAndRemoveRandomWeaponOrNull()
+        // check room next
+            ?: currentRoom.inventory.getAndRemoveRandomWeaponOrNull())?.let { foundWeapon ->
+            with(StringBuilder()) {
+                weapon?.let { oldWeapon ->
+                    appendLine(dropString(oldWeapon))
+                    currentRoom.inventory.items.add(oldWeapon)
+                }
+
+                weapon = foundWeapon
+
+                d100(10) {
+                    appendLine(FlavorText.get(EntityAction.GET_ANY_ITEM))
+                }
+                appendLine(equipString(foundWeapon))
+                announceToAll(this)
             }
 
-            weapon = foundWeapon
-            // TODO: consider flavor text
-            // say(FlavorText.get(EntityAction.GET_ANY_ITEM))
-            announceToAll(getString(foundWeapon))
-        }
-    }
+            announceToAll(equipString(foundWeapon))
+        } ?: doNothing()
 
     private fun doFindAndEquipAnyArmor() {
         currentRoom.inventory.getAndRemoveRandomArmorOrNull()?.let { foundArmor ->
@@ -416,13 +456,17 @@ abstract class EntityBase(
     private fun doGetRandomBetterWeapon() {
         Debug.println("EntityBase::doGetRandomBetterWeapon()")
         currentRoom.inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)?.let { newWeapon ->
-            weapon?.let { oldWeapon ->
-                announceToAll(dropString(oldWeapon))
-                currentRoom.inventory.items.add(oldWeapon)
-            }
+            with(StringBuilder()) {
+                weapon?.let { oldWeapon ->
+                    appendLine(dropString(oldWeapon))
+                    currentRoom.inventory.items.add(oldWeapon)
+                }
 
-            weapon = newWeapon
-            announceToAll(getString(newWeapon))
+                weapon = newWeapon
+                appendLine(getString(newWeapon))
+
+                announceToAll(this)
+            }
         } ?: {
             Debug.println("EntityBase::doGetRandomWeapon() - no weapon in current room")
             doNothing()
@@ -431,13 +475,17 @@ abstract class EntityBase(
 
     private fun doGetRandomBetterArmor() {
         currentRoom.inventory.getAndRemoveRandomBetterArmorOrNull((armor?.defense?.plus(1)) ?: 0)?.let { newArmor ->
-            armor?.let { oldArmor ->
-                currentRoom.inventory.items.add(oldArmor)
-                announceToAll(dropString(oldArmor))
-            }
+            with(StringBuilder()) {
+                armor?.let { oldArmor ->
+                    currentRoom.inventory.items.add(oldArmor)
+                    appendLine(dropString(oldArmor))
+                }
 
-            armor = newArmor
-            announceToAll(getString(newArmor))
+                armor = newArmor
+                appendLine(getString(newArmor))
+
+                announceToAll(this)
+            }
         } ?: doNothing()
 
         // Debug.println("EntityBase::doGetRandomArmor() - no armor in current room")
@@ -528,35 +576,63 @@ abstract class EntityBase(
 
     fun doEatRandomFoodItem() =
         inventory.getRandomTypedItemOrNull<ItemFood>()?.let { foodFromInventory ->
-            announceToAll(Message.ENTITY_EATS_FOOD_FROM_INVENTORY, prefixedRandomName, foodFromInventory.name)
+            with(StringBuilder()) {
+                appendLine(
+                    Messages.get(
+                        Message.ENTITY_EATS_FOOD_FROM_INVENTORY,
+                        prefixedRandomName,
+                        foodFromInventory.name
+                    )
+                )
 
-            if(--foodFromInventory.bites == 0) {
-                announceToAll(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                currentRoom.inventory.items.remove(foodFromInventory)
+                if (--foodFromInventory.bites == 0) {
+                    appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
+                    currentRoom.inventory.items.remove(foodFromInventory)
+                }
+
+                announceToAll(this)
             }
         } ?: currentRoom.inventory.getRandomTypedItemOrNull<ItemFood>()?.let { foodFromRoom ->
-            announceToAll(Message.ENTITY_EATS_FOOD_ON_GROUND, prefixedRandomName, foodFromRoom.name)
+            with(StringBuilder()) {
+                appendLine(Message.ENTITY_EATS_FOOD_ON_GROUND, prefixedRandomName, foodFromRoom.name)
 
-            if(--foodFromRoom.bites == 0) {
-                announceToAll(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                currentRoom.inventory.items.remove(foodFromRoom)
+                if (--foodFromRoom.bites == 0) {
+                    appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
+                    currentRoom.inventory.items.remove(foodFromRoom)
+                }
+
+                announceToAll(this)
             }
         } ?: doNothing()
 
     fun doDrinkRandomDrinkItem() =
         inventory.getRandomTypedItemOrNull<ItemDrink>()?.let { drinkFromInventory ->
-            announceToAll(Message.ENTITY_DRINKS_DRINK_FROM_INVENTORY, prefixedRandomName, drinkFromInventory.name)
+            with(StringBuilder()) {
+                appendLine(
+                    Messages.get(
+                        Message.ENTITY_DRINKS_DRINK_FROM_INVENTORY,
+                        prefixedRandomName,
+                        drinkFromInventory.name
+                    )
+                )
 
-            if(--drinkFromInventory.quaffs == 0) {
-                announceToAll(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                currentRoom.inventory.items.remove(drinkFromInventory)
+                if (--drinkFromInventory.quaffs == 0) {
+                    appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
+                    currentRoom.inventory.items.remove(drinkFromInventory)
+                }
+
+                announceToAll(this)
             }
         } ?: currentRoom.inventory.getRandomTypedItemOrNull<ItemDrink>()?.let { drinkFromRoom ->
-            announceToAll(Message.ENTITY_DRINKS_DRINK_ON_GROUND, prefixedRandomName, drinkFromRoom.name)
+            with(StringBuilder()) {
+                appendLine(Message.ENTITY_DRINKS_DRINK_ON_GROUND, prefixedRandomName, drinkFromRoom.name)
 
-            if(--drinkFromRoom.quaffs == 0) {
-                announceToAll(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                currentRoom.inventory.items.remove(drinkFromRoom)
+                if (--drinkFromRoom.quaffs == 0) {
+                    appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
+                    currentRoom.inventory.items.remove(drinkFromRoom)
+                }
+
+                announceToAll(this)
             }
         } ?: doNothing()
 
@@ -564,7 +640,10 @@ abstract class EntityBase(
     private fun doIdleFlavorAction() =
         announceToAll(
             FlavorText.get(EntityAction.IDLE_FLAVOR_ACTION)
-                .replace("capitalizedConversationalName", conversationalName.replaceFirstChar { it.uppercase() })
+                .replace(
+                    oldValue = "capitalizedConversationalName",
+                    newValue = capitalizedConversationalName
+                )
         )
 
     private fun doRandomMove() =
@@ -639,7 +718,14 @@ abstract class EntityBase(
             EntitySituation.NO_EQUIPPED_ARMOR -> armor == null
 
             EntitySituation.ANY_UNSEARCHED_DEAD_HOSTILES -> deadAndUnsearchedHostilesCount > 0
-            EntitySituation.CURRENT_ROOM_CONTAINS_WEAPON -> currentRoom.containsWeapon
+
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_WEAPON -> inventory.containsWeapon || currentRoom.containsWeapon
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_ARMOR -> inventory.containsArmor || currentRoom.containsArmor
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_FOOD -> inventory.containsFood || currentRoom.containsFood
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_DRINK -> inventory.containsDrink || currentRoom.containsDrink
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_JUNK -> inventory.containsJunk || currentRoom.containsJunk
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_CONTAINER -> inventory.containsContainer || currentRoom.containsContainer
+
             EntitySituation.ANY -> true
             else -> false
         }

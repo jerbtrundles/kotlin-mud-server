@@ -1,5 +1,6 @@
 package engine.entity
 
+import engine.Inventory
 import engine.item.template.ItemTemplates
 
 class EntityMonsterTemplate(
@@ -10,7 +11,7 @@ class EntityMonsterTemplate(
     val experience: Int,
     val gold: Int
 ) {
-    fun create() = EntityMonster(
+    fun create(inventory: Inventory = Inventory()) = EntityMonster(
         level = this.level,
         monsterName = this.name,
         experience = this.experience,
@@ -24,6 +25,7 @@ class EntityMonsterTemplate(
             maximumHealth = this.attributes.maximumHealth,
             maximumMagic = this.attributes.maximumMagic
         ),
+        inventory = inventory,
         keywords = this.keywords,
         armor = ItemTemplates.armor.getOrNull(0)?.createItem(),
         weapon = ItemTemplates.weapons.getOrNull(0)?.createItem()

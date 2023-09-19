@@ -1,6 +1,7 @@
 package engine.utility
 
 import com.beust.klaxon.Klaxon
+import kotlin.random.Random
 
 object Common {
     fun collectionString(
@@ -55,4 +56,10 @@ object Common {
 
     fun loadJson(c: Class<() -> Unit>, fileName: String) =
         c.getResourceAsStream(fileName)?.bufferedReader()?.readText()!!
+
+    fun d100(percentChance: Int, doThis: () -> Unit) {
+        if (Random.nextInt(from = 0, until = 100) < percentChance) {
+            doThis()
+        }
+    }
 }

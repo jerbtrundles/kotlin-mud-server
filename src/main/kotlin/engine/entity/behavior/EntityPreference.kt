@@ -23,7 +23,7 @@ class EntityPreference(
         val defaultPreferenceFindAnyWeaponIfNoneEquipped = EntityPreference(
             listOf(
                 EntitySituation.NO_EQUIPPED_WEAPON,
-                EntitySituation.CURRENT_ROOM_CONTAINS_WEAPON
+                EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_WEAPON
             ),
             EntityAction.FIND_AND_EQUIP_ANY_WEAPON
         )

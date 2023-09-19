@@ -1,12 +1,8 @@
 package debug
 
-import engine.Messages
 import engine.entity.EntityBase
-import engine.entity.EntityFriendlyNpc
-import engine.entity.EntityMonster
 import engine.entity.behavior.EntityAction
 import engine.entity.behavior.EntitySituation
-import engine.game.Game
 import engine.item.template.ItemTemplates
 import engine.player.Player
 import engine.world.World
@@ -17,9 +13,9 @@ object Debug {
     private const val debugging = true
 
     const val valuableItemMinimumValue = 200
-    const val maxNpcs = 0
-    const val maxMonsters = 0
-    const val maxJanitors = 0
+    const val maxNpcs = 10
+    const val maxMonsters = 10
+    const val maxJanitors = 5
     const val npcDelayMin = 2000
     const val npcDelayMax = 3000
     const val monsterDelayMin = 3000
@@ -75,7 +71,7 @@ object Debug {
 
     fun assessSituations(player: Player, entity: EntityBase) {
         EntitySituation.entries.forEach { situation ->
-            player.sendMessage("$situation: ${entity.isInSituation(situation)}")
+            player.sendToMe("$situation: ${entity.isInSituation(situation)}")
         }
     }
 

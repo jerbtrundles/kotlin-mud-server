@@ -1,15 +1,47 @@
 package engine
 
 import debug.Debug
-import engine.item.ItemArmor
-import engine.item.ItemBase
-import engine.item.ItemWeapon
+import engine.item.*
+import engine.item.template.ItemTemplate
+import engine.item.template.ItemTemplates
 import engine.utility.Common
+import engine.utility.Common.d100
 import java.util.*
 
 class Inventory(
     val items: MutableList<ItemBase> = Collections.synchronizedList(mutableListOf())
 ) {
+    companion object {
+        fun defaultMonster() = Inventory()
+        fun defaultNpc() = Inventory()
+        fun createWithRandomStuff(): Inventory {
+            with(Inventory()) {
+                repeat(5) {
+                    randomChanceAddItemToList(ItemTemplates.junk)
+                    randomChanceAddItemToList(ItemTemplates.food)
+                    randomChanceAddItemToList(ItemTemplates.drinks)
+                    randomChanceAddItemToList(ItemTemplates.weapons)
+                    randomChanceAddItemToList(ItemTemplates.armor)
+                }
+
+                return this
+            }
+        }
+    }
+
+    private inline fun <reified T> containsType() = items.any { it is T }
+    val containsWeapon get() = containsType<ItemWeapon>()
+    val containsArmor get() = containsType<ItemArmor>()
+    val containsJunk get() = containsType<ItemJunk>()
+    val containsFood get() = containsType<ItemFood>()
+    val containsDrink get() = containsType<ItemDrink>()
+    val containsContainer get() = containsType<ItemContainer>()
+
+    private fun randomChanceAddItemToList(templates: List<ItemTemplate>, percentChance: Int = 20) =
+        d100(percentChance) {
+            templates.randomOrNull()?.let { items.add(it.createItem()) }
+        }
+
     fun getItemByKeyword(keyword: String) = items.firstOrNull { item ->
         item.keywords.contains(keyword)
     }
@@ -61,10 +93,10 @@ class Inventory(
             }
 
     fun getAndRemoveBestWeaponOrNull(minPower: Int = 0) =
-       getBestWeaponOrNull(minPower)?.let {
-           items.remove(it)
-           it
-       }
+        getBestWeaponOrNull(minPower)?.let {
+            items.remove(it)
+            it
+        }
 
     fun getBestWeaponOrNull(minPower: Int = 0) = items.asSequence()
         .filterIsInstance<ItemWeapon>()

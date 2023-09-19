@@ -1,6 +1,7 @@
 package engine.entity
 
 import debug.Debug
+import engine.Inventory
 import engine.entity.behavior.EntityBehavior
 import engine.item.ItemArmor
 import engine.item.ItemWeapon
@@ -17,7 +18,8 @@ class EntityMonster(
     weapon: ItemWeapon? = null,
     armor: ItemArmor? = null,
     stringPrefix: String = "The ",
-    arriveStringSuffix: String = "has arrived"
+    arriveStringSuffix: String = "has arrived",
+    inventory: Inventory = Inventory.defaultMonster()
 ) : EntityBase(
     faction = EntityFaction.factionMonster,
     name = monsterName,
@@ -32,7 +34,8 @@ class EntityMonster(
     gold = gold,
     delayMin = Debug.monsterDelayMin,
     delayMax = Debug.monsterDelayMax,
-    arriveStringSuffix = arriveStringSuffix
+    arriveStringSuffix = arriveStringSuffix,
+    inventory = inventory
 ) {
     override val nameWithJob
         get() = name

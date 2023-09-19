@@ -1,5 +1,8 @@
 package engine.utility
 
+import engine.Message
+import engine.Messages
+
 const val vowels: String = "aeiou"
 fun isVowel(c: Char) = vowels.contains(c)
 
@@ -25,3 +28,6 @@ fun String.withIndefiniteArticle(capitalized: Boolean = false): String {
         }
     }
 }
+
+fun StringBuilder.appendLine(message: Message, vararg tokens: String) =
+    appendLine(Messages.get(message, *tokens))

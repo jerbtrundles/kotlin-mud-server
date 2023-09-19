@@ -1,7 +1,6 @@
 package connection.plugins
 
 import connection.ConnectionManager
-import engine.player.MyViewModel
 import engine.player.Player
 import engine.world.World
 import io.ktor.server.application.*
@@ -31,8 +30,13 @@ fun Application.configureSockets() {
 
                     player.onInput(text)
 
-                    if (text.equals("bye", ignoreCase = true)) {
-                        close(CloseReason(CloseReason.Codes.NORMAL, "Client said BYE"))
+                    // TODO: close condition
+                    if (text.lowercase() == "quit") {
+                        this.close(
+                            CloseReason(
+                                CloseReason.Codes.NORMAL, "client said quit"
+                            )
+                        )
                     }
                 }
             }

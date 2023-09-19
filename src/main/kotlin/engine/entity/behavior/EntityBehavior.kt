@@ -8,26 +8,26 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
         val defaultNpc = EntityBehavior(
             listOf(
                 // EntityPreference.defaultPreferenceQuipLikeABoss,
-//                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
-//                EntityPreference.defaultPreferenceFoundValuableItem,
-//                EntityPreference.defaultPreferenceSearchDeadHostile,
-//                EntityPreference.defaultPreferenceAttackLivingHostile,
-//                EntityPreference.defaultPreferenceFindBetterWeapon,
-//                EntityPreference.defaultPreferenceFindBetterArmor
+                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+                EntityPreference.defaultPreferenceFoundValuableItem,
+                EntityPreference.defaultPreferenceSearchDeadHostile,
+                EntityPreference.defaultPreferenceAttackLivingHostile,
+                EntityPreference.defaultPreferenceFindBetterWeapon,
+                EntityPreference.defaultPreferenceFindBetterArmor
             )
         )
 
         val defaultMonster = EntityBehavior(
             listOf(
-//                EntityPreference.defaultPreferenceEatFood,
-//                EntityPreference.defaultPreferenceDrink,
+                EntityPreference.defaultPreferenceEatFood,
+                EntityPreference.defaultPreferenceDrink,
                 // EntityPreference.defaultPreferenceQuipLikeABoss,
-//                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
                 // EntityPreference.defaultPreferenceAttackPlayer,
-//                EntityPreference.defaultPreferenceSearchDeadHostile,
-//                EntityPreference.defaultPreferenceAttackLivingHostile,
-//                EntityPreference.defaultPreferenceFindBetterWeapon,
-//                EntityPreference.defaultPreferenceFindBetterArmor
+                EntityPreference.defaultPreferenceSearchDeadHostile,
+                EntityPreference.defaultPreferenceAttackLivingHostile,
+                EntityPreference.defaultPreferenceFindBetterWeapon,
+                EntityPreference.defaultPreferenceFindBetterArmor
             )
         )
 
@@ -53,7 +53,7 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
 //            EntityAction.SIT,
 //            EntityAction.KNEEL,
             EntityAction.QUIP_TO_RANDOM_ENTITY,
-//            EntityAction.IDLE_FLAVOR_ACTION,
+            EntityAction.IDLE_FLAVOR_ACTION,
             EntityAction.EAT_RANDOM_FOOD,
             EntityAction.DRINK_RANDOM_DRINK
         )

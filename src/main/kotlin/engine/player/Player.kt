@@ -11,6 +11,7 @@ import engine.game.Game
 import engine.game.GameInput
 import engine.game.MovementDirection
 import engine.item.*
+import engine.utility.appendLine
 import engine.world.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.runBlocking
@@ -53,17 +54,14 @@ class Player(
         get() = Messages.get(Message.PLAYER_CURRENT_GOLD, gold.toString())
 
     // region move
-    private fun doMove(gameInput: GameInput) {
+    private fun doMove(gameInput: GameInput) =
         // directional move vs general connection
-        val matchingConnection =
-            currentRoom.matchingConnectionOrNull(gameInput)
-        matchingConnection?.let {
+        currentRoom.matchingConnectionOrNull(gameInput)?.let {
             currentRoom.removePlayer(this)
             coordinates = it.coordinates
             currentRoom.addPlayer(this)
             doLook()
         } ?: doUnknown()
-    }
     // endregion
 
     fun departString(connection: Connection) =
@@ -96,18 +94,18 @@ class Player(
                 }
             }
         } ?: doLookCurrentRoom()
-    
+
     private fun doLookAtItemWithKeyword(keyword: String) =
         getItemWithKeyword(keyword)?.let {
-            sendMessage(it.description)
+            sendToMe(it.description)
         } ?: doUnknown()
 
     private fun doLookInItemWithKeyword(keyword: String) =
         getTypedItemByKeyword<ItemContainer>(keyword)?.let {
             if (it.closed) {
-                sendMessage(Message.ITEM_IS_CLOSED, it.name)
+                sendToMe(Message.ITEM_IS_CLOSED, it.name)
             } else {
-                sendMessage(it.inventoryString)
+                sendToMe(it.inventoryString)
             }
         } ?: doUnknown()
 
@@ -116,41 +114,45 @@ class Player(
         val subregion = region.subregions[coordinates.subregion]
         val room = subregion.rooms[coordinates.room]
 
-        sendMessage(Message.LOOK_CURRENT_ROOM, region.displayString, subregion.toString(), room.displayString)
+        sendToMe(Message.LOOK_CURRENT_ROOM, region.displayString, subregion.toString(), room.displayString)
     }
     // endregion
 
     // region player posture
     private fun doStand() =
         if (posture == EntityPosture.STANDING) {
-            sendMessage(Message.PLAYER_ALREADY_STANDING)
+            sendToMe(Message.PLAYER_ALREADY_STANDING)
         } else {
             posture = EntityPosture.STANDING
-            sendMessage(Message.PLAYER_STANDS_UP)
+            sendToMe(Message.PLAYER_STANDS_UP)
+            sendToOthers(Message.OTHER_PLAYER_STANDS_UP, name)
         }
 
     private fun doSit() =
         if (posture == EntityPosture.SITTING) {
-            sendMessage(Message.PLAYER_ALREADY_SITTING)
+            sendToMe(Message.PLAYER_ALREADY_SITTING)
         } else {
             posture = EntityPosture.SITTING
-            sendMessage(Message.PLAYER_SITS)
+            sendToMe(Message.PLAYER_SITS)
+            sendToOthers(Message.OTHER_PLAYER_SITS)
         }
 
     private fun doKneel() =
         if (posture == EntityPosture.KNEELING) {
-            sendMessage(Message.PLAYER_ALREADY_KNEELING)
+            sendToMe(Message.PLAYER_ALREADY_KNEELING)
         } else {
             posture = EntityPosture.KNEELING
-            sendMessage(Message.PLAYER_KNEELS)
+            sendToMe(Message.PLAYER_KNEELS)
+            sendToOthers(Message.OTHER_PLAYER_KNEELS)
         }
 
     private fun doLieDown() =
         if (posture == EntityPosture.LYING_DOWN) {
-            sendMessage(Message.PLAYER_ALREADY_LYING_DOWN)
+            sendToMe(Message.PLAYER_ALREADY_LYING_DOWN)
         } else {
             posture = EntityPosture.LYING_DOWN
-            sendMessage(Message.PLAYER_LIES_DOWN)
+            sendToMe(Message.PLAYER_LIES_DOWN)
+            sendToOthers(Message.OTHER_PLAYER_LIES_DOWN, name)
         }
     // endregion
 
@@ -160,15 +162,24 @@ class Player(
         if (gameInput.words[2] != "in") {
             doUnknown()
         } else {
-            val container = getTypedItemByKeyword<ItemContainer>(gameInput.words[3])
-            container?.let {
-                if (it.closed) {
-                    sendMessage(Message.ITEM_IS_CLOSED, it.name)
+            getTypedItemByKeyword<ItemContainer>(gameInput.words[3])?.let { container ->
+                if (container.closed) {
+                    sendToMe(Message.ITEM_IS_CLOSED, container.name)
                 } else {
-                    getItemWithKeyword(gameInput.words[1])?.run {
-                        container.inventory.items.add(this)
-                        inventory.items.remove(this)
-                        sendMessage(Message.PLAYER_PUTS_ITEM_IN_CONTAINER, it.name, container.name)
+                    getItemWithKeyword(gameInput.words[1])?.let { item ->
+                        container.inventory.items.add(item)
+                        inventory.items.remove(item)
+                        sendToMe(
+                            Message.PLAYER_PUTS_ITEM_IN_CONTAINER,
+                            item.nameWithIndefiniteArticle,
+                            container.nameWithIndefiniteArticle
+                        )
+                        sendToOthers(
+                            Message.OTHER_PLAYER_PUTS_ITEM_IN_CONTAINER,
+                            name,
+                            item.nameWithIndefiniteArticle,
+                            container.nameWithIndefiniteArticle
+                        )
                     } ?: doUnknown()
                 }
             } ?: doUnknown()
@@ -178,14 +189,16 @@ class Player(
         inventory.getItemByKeyword(gameInput.suffix)?.let {
             inventory.items.remove(it)
             currentRoom.inventory.items.add(it)
-            sendMessage(Message.PLAYER_DROPS_ITEM, it.nameWithIndefiniteArticle)
+            sendToMe(Message.PLAYER_DROPS_ITEM, it.nameWithIndefiniteArticle)
+            sendToOthers(Message.OTHER_PLAYER_DROPS_ITEM, name, it.nameWithIndefiniteArticle)
         } ?: doUnknown()
 
     private fun doGetItemFromRoom(gameInput: GameInput) =
-        currentRoom.inventory.getItemByKeyword(gameInput.suffix)?.let {
-            inventory.items.add(it)
-            currentRoom.inventory.items.remove(it)
-            sendMessage(Message.PLAYER_GETS_ITEM, it.nameWithIndefiniteArticle)
+        currentRoom.inventory.getItemByKeyword(gameInput.suffix)?.let { item ->
+            inventory.items.add(item)
+            currentRoom.inventory.items.remove(item)
+            sendToMe(Message.PLAYER_GETS_ITEM, item.nameWithIndefiniteArticle)
+            sendToOthers(Message.OTHER_PLAYER_GETS_ITEM, item.nameWithIndefiniteArticle)
         } ?: doUnknown()
 
     private fun doGetItemFromContainer(gameInput: GameInput) =
@@ -198,14 +211,25 @@ class Player(
                 validContainer.inventory.getItemByKeyword(gameInput.words[1])?.let { validItem ->
                     inventory.items.add(validItem)
                     container.inventory.items.remove(validItem)
-                    sendMessage(Message.PLAYER_GETS_ITEM_FROM_CONTAINER, validContainer.name, validItem.name)
+
+                    sendToMe(
+                        Message.PLAYER_GETS_ITEM_FROM_CONTAINER,
+                        validContainer.nameWithIndefiniteArticle,
+                        validItem.nameWithIndefiniteArticle
+                    )
+                    sendToOthers(
+                        Message.OTHER_PLAYER_GETS_ITEM_FROM_CONTAINER,
+                        name,
+                        validContainer.nameWithIndefiniteArticle,
+                        validItem.nameWithIndefiniteArticle
+                    )
                 } ?: doUnknown()
             } ?: doUnknown()
         }
 
     private fun doGetItem(gameInput: GameInput) =
         when (gameInput.words.size) {
-            1 -> sendMessage(Message.GET_WHAT)
+            1 -> sendToMe(Message.GET_WHAT)
             2 -> doGetItemFromRoom(gameInput)
             4 -> doGetItemFromContainer(gameInput)
             else -> doUnknown()
@@ -216,21 +240,26 @@ class Player(
     private fun doEat(gameInput: GameInput) =
         getTypedItemByKeyword<ItemFood>(gameInput.suffix)?.let {
             if (--it.bites == 0) {
-                sendMessage(Message.PLAYER_EATS_FOOD_FINAL, it.name)
                 inventory.items.remove(it)
+
+                sendToMe(Message.PLAYER_EATS_FOOD_FINAL, it.name)
+                sendToOthers(Message.OTHER_PLAYER_EATS_FOOD_FINAL, name, it.name)
             } else {
-                sendMessage(Message.PLAYER_EATS_FOOD, it.name, Messages.biteString(it.bites))
+                sendToMe(Message.PLAYER_EATS_FOOD, it.name, Messages.biteString(it.bites))
+                sendToOthers(Message.PLAYER_EATS_FOOD, name, it.name, Messages.biteString(it.bites))
             }
         } ?: doUnknown()
-
 
     private fun doDrink(gameInput: GameInput) =
         getTypedItemByKeyword<ItemDrink>(gameInput.suffix)?.let {
             if (--it.quaffs == 0) {
-                sendMessage(Message.PLAYER_DRINKS_FINAL, it.name)
                 inventory.items.remove(it)
+
+                sendToMe(Message.PLAYER_DRINKS_FINAL, it.name)
+                sendToOthers(Message.OTHER_PLAYER_DRINKS_FINAL, name, it.name)
             } else {
-                sendMessage(Message.PLAYER_DRINKS, it.name, Messages.quaffString(it.quaffs))
+                sendToMe(Message.PLAYER_DRINKS, it.name, Messages.quaffString(it.quaffs))
+                sendToOthers(Message.OTHER_PLAYER_DRINKS, name, it.name, Messages.quaffString(it.quaffs))
             }
         } ?: doUnknown()
     // endregion
@@ -238,34 +267,35 @@ class Player(
     // region containers
     private fun doOpenContainer(gameInput: GameInput) =
         getTypedItemByKeyword<ItemContainer>(gameInput.suffix)?.let {
-            if (it.closed) {
-                it.closed = false
-                sendMessage(Message.PLAYER_OPENS_ITEM, it.name)
-
+            if (!it.closed) {
+                sendToMe(Message.ITEM_ALREADY_OPEN, it.nameWithIndefiniteArticle)
             } else {
-                sendMessage(Message.ITEM_ALREADY_OPEN, it.name)
+                it.closed = false
+                sendToMe(Message.PLAYER_OPENS_ITEM, it.nameWithIndefiniteArticle)
+                sendToOthers(Message.OTHER_PLAYER_OPENS_ITEM, name, it.nameWithIndefiniteArticle)
             }
         } ?: doUnknown()
 
     private fun doCloseContainer(gameInput: GameInput) =
         getTypedItemByKeyword<ItemContainer>(gameInput.suffix)?.let {
             if (it.closed) {
-                sendMessage(Message.ITEM_ALREADY_CLOSED, it.name)
+                sendToMe(Message.ITEM_ALREADY_CLOSED, it.nameWithIndefiniteArticle)
             } else {
                 it.closed = true
-                sendMessage(Message.PLAYER_CLOSES_ITEM, it.name)
+                sendToMe(Message.PLAYER_CLOSES_ITEM, it.nameWithIndefiniteArticle)
+                sendToMe(Message.OTHER_PLAYER_CLOSES_ITEM, name, it.nameWithIndefiniteArticle)
             }
         } ?: doUnknown()
     // endregion
 
     // region single-line handlers
     private fun doShowBankAccountBalance() =
-        sendMessage(bankAccountBalanceString)
+        sendToMe(bankAccountBalanceString)
 
-    private fun doShowGold() = sendMessage(goldString)
-    private fun doShowInventory() = sendMessage(inventoryString)
-    private fun doShowHealth() = sendMessage(healthString)
-    private fun doUnknown() = sendMessage(Message.UNHANDLED_PLAYER_INPUT)
+    private fun doShowGold() = sendToMe(goldString)
+    private fun doShowInventory() = sendToMe(inventoryString)
+    private fun doShowHealth() = sendToMe(healthString)
+    private fun doUnknown() = sendToMe(Message.UNHANDLED_PLAYER_INPUT)
     // endregion
 
     // region inventory helpers
@@ -279,32 +309,35 @@ class Player(
     // endregion
 
     // region equip/unequip
-    private fun doShowEquipment() {
-        weapon?.let {
-            sendMessage(Message.PLAYER_SHOW_EQUIPPED_ITEM, it.nameWithIndefiniteArticle)
-        } ?: sendMessage(Message.PLAYER_NO_WEAPON_EQUIPPED)
+    private fun doShowEquipment() =
+        with(StringBuilder()) {
+            weapon?.let {
+                appendLine(Message.PLAYER_SHOW_EQUIPPED_ITEM, it.nameWithIndefiniteArticle)
+            } ?: appendLine(Message.PLAYER_NO_WEAPON_EQUIPPED)
 
-        armor?.let {
-            sendMessage(Message.PLAYER_SHOW_EQUIPPED_ITEM, it.nameWithIndefiniteArticle)
-        } ?: sendMessage(Message.PLAYER_NO_ARMOR_EQUIPPED)
-    }
+            armor?.let {
+                appendLine(Message.PLAYER_SHOW_EQUIPPED_ITEM, it.nameWithIndefiniteArticle)
+            } ?: appendLine(Message.PLAYER_NO_ARMOR_EQUIPPED)
+
+            sendToMe(this)
+        }
 
     private fun doRemoveEquipment(gameInput: GameInput) =
         if (weapon != null && weapon!!.keywords.contains(gameInput.words[1])) {
             val weaponToRemove = weapon!!
             inventory.items.add(weaponToRemove)
             weapon = null
-            sendMessage(Message.PLAYER_REMOVES_ITEM, weaponToRemove.name)
+            sendToMe(Message.PLAYER_REMOVES_ITEM, weaponToRemove.name)
         } else if (armor != null && armor!!.keywords.contains(gameInput.words[1])) {
             val armorToRemove = armor!!
             inventory.items.add(armorToRemove)
             armor = null
-            sendMessage(Message.PLAYER_REMOVES_ITEM, armorToRemove.name)
+            sendToMe(Message.PLAYER_REMOVES_ITEM, armorToRemove.name)
         } else {
             doUnknown()
         }
 
-    private fun doEquipItem(gameInput: GameInput) {
+    private fun doEquipItem(gameInput: GameInput) =
         // find weapon from player inventory
         inventory.getTypedItemByKeyword<ItemWeapon>(gameInput.words[1])?.let {
             doEquipWeaponFromPlayerInventory(it)
@@ -318,208 +351,255 @@ class Player(
         } ?: currentRoom.inventory.getTypedItemByKeyword<ItemArmor>(gameInput.words[1])?.let {
             doEquipArmorFromCurrentRoom(it)
         } ?: doUnknown()
-    }
 
     private fun doEquipWeaponFromCurrentRoom(weaponFromCurrentRoom: ItemWeapon) {
         weapon?.let { alreadyEquippedWeapon ->
-            sendMessage(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
+            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
         } ?: {
             weapon = weaponFromCurrentRoom
             currentRoom.inventory.items.remove(weaponFromCurrentRoom)
-            sendMessage(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, weaponFromCurrentRoom.name)
+
+            sendToMe(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, weaponFromCurrentRoom.name)
+            sendToOthers(Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM, name, weaponFromCurrentRoom.name)
         }
     }
 
     private fun doEquipArmorFromCurrentRoom(armorFromCurrentRoom: ItemArmor) {
         armor?.let { alreadyEquippedArmor ->
-            sendMessage(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
+            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
         } ?: {
             armor = armorFromCurrentRoom
             currentRoom.inventory.items.remove(armorFromCurrentRoom)
-            sendMessage(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, armorFromCurrentRoom.name)
+
+            sendToMe(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, armorFromCurrentRoom.name)
+            sendToOthers(Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM, name, armorFromCurrentRoom.name)
         }
     }
 
     private fun doEquipWeaponFromPlayerInventory(weaponFromInventory: ItemWeapon) {
         weapon?.let { alreadyEquippedWeapon ->
-            sendMessage(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
+            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
         } ?: {
             weapon = weaponFromInventory
             inventory.items.remove(weaponFromInventory)
-            sendMessage(Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY, weaponFromInventory.name)
+
+            sendToMe(Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY, weaponFromInventory.nameWithIndefiniteArticle)
+            sendToOthers(
+                Message.OTHER_PLAYER_EQUIPS_ITEM_FROM_INVENTORY,
+                name,
+                weaponFromInventory.nameWithIndefiniteArticle
+            )
         }
     }
 
     private fun doEquipArmorFromPlayerInventory(armorFromInventory: ItemArmor) {
         armor?.let { alreadyEquippedArmor ->
-            sendMessage(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
+            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
         } ?: {
             armor = armorFromInventory
             inventory.items.remove(armorFromInventory)
-            sendMessage(Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY, armorFromInventory.name)
+
+            sendToMe(Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY, armorFromInventory.nameWithIndefiniteArticle)
+            sendToMe(
+                Message.OTHER_PLAYER_EQUIPS_ITEM_FROM_INVENTORY,
+                name,
+                armorFromInventory.nameWithIndefiniteArticle
+            )
         }
     }
     // endregion
 
     // region attack/search entities
     private fun doAttack(gameInput: GameInput) {
-        currentRoom.randomLivingHostileOrNull(faction)?.let { hostile ->
+        currentRoom.randomLivingHostileOrNull(faction, gameInput.suffix)?.let { livingHostile ->
+            val toMe = StringBuilder()
+            val toOthers = StringBuilder()
+
             val weaponString = weapon?.name ?: "fists"
             val attack = attributes.strength + (weapon?.power ?: 0)
-            val defense = hostile.attributes.baseDefense
+            val defense = livingHostile.attributes.baseDefense
             val damage = (attack - defense).coerceAtLeast(0)
 
-            sendMessage(Message.PLAYER_ATTACKS_ENTITY_WITH_WEAPON, hostile.name, weaponString)
+            toMe.appendLine(Message.PLAYER_ATTACKS_ENTITY_WITH_WEAPON, livingHostile.name, weaponString)
 
             if (damage > 0) {
-                sendToMe(Message.PLAYER_HITS_FOR_DAMAGE, damage.toString())
-                sendToOthers(Message.OTHER_PLAYER_HITS_FOR_DAMAGE, damage.toString())
+                toMe.appendLine(Message.PLAYER_HITS_FOR_DAMAGE, damage.toString())
+                toOthers.appendLine(Message.OTHER_PLAYER_HITS_FOR_DAMAGE, damage.toString())
             } else {
-                sendToMe(Message.PLAYER_MISSES)
-                sendToOthers(Message.OTHER_PLAYER_MISSES, name)
+                toMe.appendLine(Message.PLAYER_MISSES)
+                toOthers.appendLine(Message.OTHER_PLAYER_MISSES, name)
             }
 
-            hostile.attributes.currentHealth -= damage
-            if (hostile.attributes.currentHealth <= 0) {
-                experience += hostile.experience
+            livingHostile.attributes.currentHealth -= damage
+            if (livingHostile.attributes.currentHealth <= 0) {
+                toMe.appendLine(Message.ENTITY_DIES, livingHostile.name)
+                toOthers.appendLine(Message.ENTITY_DIES, livingHostile.name)
 
-                currentRoom.announceToAll(Message.MONSTER_DIES, hostile.name)
-                sendMessage(Message.PLAYER_GAINS_EXPERIENCE, hostile.experience.toString())
+                experience += livingHostile.experience
+                toMe.appendLine(Message.PLAYER_GAINS_EXPERIENCE, livingHostile.experience.toString())
             }
+
+            sendToMe(toMe)
+            sendToOthers(toOthers)
         } ?: doUnknown()
     }
 
-    fun sendToMe(str: String) = sendMessage(str)
-    fun sendToMe(message: Message, vararg tokens: String) = sendMessage(message, *tokens)
-    fun sendToOthers(message: Message, vararg tokens: String) = currentRoom.announceToOthers(this, message, *tokens)
-
-    private fun doSearch(gameInput: GameInput) {
+    private fun doSearch(gameInput: GameInput) =
         currentRoom.firstDeadAndUnsearchedHostileToPlayerOrNull(gameInput.suffix)?.let { deadHostile ->
-            sendMessage(Message.PLAYER_SEARCHES_DEAD_ENTITY, deadHostile.name)
-            sendMessage(Message.PLAYER_FINDS_GOLD_ON_DEAD_ENTITY, deadHostile.gold.toString(), deadHostile.name)
-            gold += deadHostile.gold
-            sendMessage(goldString)
+            deadHostile.hasNotBeenSearched = false
+
+            val toMe =
+                StringBuilder().appendLine(Message.PLAYER_SEARCHES_DEAD_ENTITY, deadHostile.name)
+            val toOthers =
+                StringBuilder().appendLine(Message.OTHER_PLAYER_SEARCHES_DEAD_ENTITY, name, deadHostile.name)
+
+            if (deadHostile.gold > 0) {
+                toMe.appendLine(Message.PLAYER_FINDS_GOLD_ON_DEAD_ENTITY, deadHostile.gold.toString(), deadHostile.name)
+                toOthers.appendLine(Message.OTHER_ENTITY_FINDS_GOLD)
+
+                gold += deadHostile.gold
+                toMe.appendLine(goldString)
+            }
 
             if (deadHostile.inventory.items.isNotEmpty()) {
                 currentRoom.inventory.items.addAll(deadHostile.inventory.items)
-                currentRoom.announceToAll(
-                    Message.ENTITY_DROPS_ITEM,
-                    deadHostile.prefixedName,
-                    deadHostile.inventory.collectionString
-                )
+
+                with(
+                    Messages.get(
+                        Message.ENTITY_DROPS_ITEM,
+                        deadHostile.prefixedName,
+                        deadHostile.inventory.collectionString
+                    )
+                ) {
+                    toMe.appendLine(this)
+                    toOthers.appendLine(this)
+                }
             }
 
-            deadHostile.hasNotBeenSearched = false
+            sendToMe(toMe.toString())
+            sendToOthers(toOthers.toString())
         } ?: doUnknown()
-    }
     // endregion
 
     // region shops
-    private fun doSellItem(gameInput: GameInput) {
-        (currentRoom as? RoomShop)?.let { shop ->
+    private fun doSellItem(gameInput: GameInput) =
+        (currentRoom as? RoomShop)?.let {
             inventory.getItemByKeyword(gameInput.suffix)?.let { itemToSell ->
                 inventory.items.remove(itemToSell)
                 gold += itemToSell.sellValue
-                sendMessage(
-                    Message.PLAYER_SELLS_ITEM_TO_MERCHANT,
-                    itemToSell.name,
-                    itemToSell.sellValue.toString()
-                )
-                sendMessage(goldString)
+
+                with(StringBuilder()) {
+                    appendLine(Message.PLAYER_SELLS_ITEM_TO_MERCHANT, itemToSell.name, itemToSell.sellValue.toString())
+                    appendLine(goldString)
+                    sendToMe(this)
+                }
+
+                sendToOthers(Message.OTHER_ENTITY_DOES_COMMERCE)
             } ?: doUnknown()
         } ?: doRoomIsNotShop()
-    }
 
-    private fun doListItems() {
+    private fun doListItems() =
         (currentRoom as? RoomShop)?.let { shop ->
-            sendMessage(shop.itemsString)
+            sendToMe(shop.itemsString)
         } ?: doRoomIsNotShop()
-    }
 
-    private fun doRoomIsNotShop() = sendMessage(Message.PLAYER_ROOM_IS_NOT_SHOP)
-    private fun doRoomIsNotBank() = sendMessage(Message.PLAYER_ROOM_IS_NOT_BANK)
+    private fun doRoomIsNotShop() = sendToMe(Message.PLAYER_ROOM_IS_NOT_SHOP)
+    private fun doRoomIsNotBank() = sendToMe(Message.PLAYER_ROOM_IS_NOT_BANK)
 
-    private fun doPriceItem(gameInput: GameInput) {
+    private fun doPriceItem(gameInput: GameInput) =
         (currentRoom as? RoomShop)?.run {
             inventory.getItemByKeyword(gameInput.suffix)?.let {
-                sendMessage(Message.PLAYER_CAN_SELL_ITEM_HERE, it.name, it.sellValue.toString())
+                sendToMe(Message.PLAYER_CAN_SELL_ITEM_HERE, it.name, it.sellValue.toString())
             } ?: doUnknown()
         } ?: doRoomIsNotShop()
-    }
 
-    private fun doBuyItem(gameInput: GameInput) {
-        (currentRoom as? RoomShop)?.run {
-            soldItemTemplates.firstOrNull { it.matches(gameInput.suffix) }?.let { template ->
-                if (gold >= template.value) {
-                    val item = template.createItem()
-                    gold -= template.value
-                    sendMessage(Message.PLAYER_BUYS_ITEM, item.nameWithIndefiniteArticle, item.value.toString())
-                    sendMessage(goldString)
-                    inventory.items.add(item)
-                } else {
-                    sendMessage(
-                        Message.PLAYER_NOT_ENOUGH_GOLD_TO_BUY_ITEM,
-                        gold.toString(),
-                        template.name,
-                        template.value.toString()
-                    )
+    private fun doBuyItem(gameInput: GameInput) =
+        // TODO: messaging to other players
+        (currentRoom as? RoomShop)?.let { shop ->
+            shop.soldItemTemplates.firstOrNull { it.matches(gameInput.suffix) }?.let { template ->
+                with(StringBuilder()) {
+                    if (gold >= template.value) {
+                        val item = template.createItem()
+                        gold -= template.value
+                        appendLine(Message.PLAYER_BUYS_ITEM, item.nameWithIndefiniteArticle, item.value.toString())
+                        appendLine(goldString)
+                        inventory.items.add(item)
+                    } else {
+                        appendLine(
+                            Message.PLAYER_NOT_ENOUGH_GOLD_TO_BUY_ITEM,
+                            gold.toString(),
+                            template.name,
+                            template.value.toString()
+                        )
+                    }
+
+                    sendToMe(this)
                 }
             } ?: doUnknown()
         } ?: doRoomIsNotShop()
-    }
     // endregion
 
-    private fun doDepositMoney(gameInput: GameInput) {
+    private fun doDepositMoney(gameInput: GameInput) =
         (currentRoom as? RoomBank)?.run {
             when (gameInput.words.size) {
                 1 -> doUnknown()
                 else -> {
                     gameInput.words[1].toIntOrNull()?.let { depositAmount ->
-                        if (depositAmount > gold) {
-                            sendMessage(Message.PLAYER_NOT_ENOUGH_GOLD_TO_DEPOSIT)
-                        } else {
-                            bankAccountBalance += depositAmount
-                            gold -= depositAmount
+                        sendToOthers(Message.OTHER_ENTITY_DOES_BANKING, name)
 
-                            sendMessage(Message.PLAYER_DEPOSITS_GOLD, depositAmount.toString())
-                            sendMessage(Message.PLAYER_BANK_ACCOUNT_BALANCE, bankAccountBalance.toString())
-                            sendMessage(Message.PLAYER_CURRENT_GOLD, gold.toString())
+                        with(StringBuilder()) {
+                            if (depositAmount > gold) {
+                                appendLine(Message.PLAYER_NOT_ENOUGH_GOLD_TO_DEPOSIT)
+                            } else {
+                                bankAccountBalance += depositAmount
+                                gold -= depositAmount
+
+                                appendLine(Message.PLAYER_DEPOSITS_GOLD, depositAmount.toString())
+                                appendLine(Message.PLAYER_BANK_ACCOUNT_BALANCE, bankAccountBalance.toString())
+                                appendLine(Message.PLAYER_CURRENT_GOLD, gold.toString())
+                            }
+
+                            sendToMe(this)
                         }
                     } ?: doUnknown()
                 }
             }
         } ?: doRoomIsNotBank()
-    }
 
-    private fun doWithdrawMoney(gameInput: GameInput) {
-        (currentRoom as? RoomBank)?.run {
+    private fun doWithdrawMoney(gameInput: GameInput) =
+        (currentRoom as? RoomBank)?.let {
             when (gameInput.words.size) {
                 1 -> doUnknown()
                 else -> {
                     gameInput.words[1].toIntOrNull()?.let { withdrawAmount ->
-                        if (withdrawAmount > bankAccountBalance) {
-                            sendMessage(Message.PLAYER_NOT_ENOUGH_GOLD_TO_WITHDRAW, gold.toString())
-                        } else {
-                            bankAccountBalance -= withdrawAmount
-                            gold += withdrawAmount
+                        sendToOthers(Message.OTHER_ENTITY_DOES_BANKING, name)
 
-                            sendMessage(Message.PLAYER_WITHDRAWS_GOLD, withdrawAmount.toString())
-                            sendMessage(bankAccountBalanceString)
-                            sendMessage(goldString)
+                        with(StringBuilder()) {
+                            if (withdrawAmount > bankAccountBalance) {
+                                appendLine(Message.PLAYER_NOT_ENOUGH_GOLD_TO_WITHDRAW, gold.toString())
+                            } else {
+                                bankAccountBalance -= withdrawAmount
+                                gold += withdrawAmount
+
+                                appendLine(Message.PLAYER_WITHDRAWS_GOLD, withdrawAmount.toString())
+                                appendLine(bankAccountBalanceString)
+                                appendLine(goldString)
+                            }
+
+                            sendToMe(this)
                         }
                     } ?: doUnknown()
                 }
             }
         } ?: doRoomIsNotBank()
-    }
 
-    private fun doCheckBankAccountBalance() {
-        (currentRoom as? RoomBank)?.run {
-            sendMessage(bankAccountBalanceString)
+    private fun doCheckBankAccountBalance() =
+        (currentRoom as? RoomBank)?.let {
+            sendToMe(bankAccountBalanceString)
+            sendToOthers(Message.OTHER_ENTITY_DOES_BANKING)
         } ?: doRoomIsNotBank()
-    }
 
-    private fun doAssess(gameInput: GameInput) {
+    private fun doAssess(gameInput: GameInput) =
         when (gameInput.words.size) {
             1 -> doUnknown()
             2 -> currentRoom.firstHostileToPlayerOrNull(gameInput.suffix)?.let { hostile ->
@@ -528,7 +608,6 @@ class Player(
 
             else -> doUnknown()
         }
-    }
 
     fun onInput(input: String) = onInput(GameInput(input))
     fun onInput(gameInput: GameInput) {
@@ -582,17 +661,34 @@ class Player(
         }
     }
 
-    fun sendMessage(str: String) = runBlocking {
+    fun sendToMe(message: Message, vararg tokens: String) =
+        sendToMe(Messages.get(message, *tokens))
+
+    fun sendToMe(str: String) = runBlocking {
         webSocketSession.send(str)
     }
 
-    fun sendMessage(message: Message, vararg tokens: String) =
-        sendMessage(Messages.get(message, *tokens))
+    fun sendToOthers(message: Message, vararg tokens: String) =
+        sendToOthers(Messages.get(message, *tokens))
 
-    override fun equals(other: Any?): Boolean {
-        return when {
+    fun sendToOthers(str: String) =
+        currentRoom.sendToOthers(this, str)
+
+    fun sendToAll(message: Message, vararg tokens: String) =
+        currentRoom.sendToAll(Messages.get(message, *tokens))
+
+    fun sendToAll(str: String) =
+        currentRoom.sendToAll(str)
+
+    fun sendToMe(sb: StringBuilder) =
+        sendToMe(sb.trim('\n').toString())
+
+    fun sendToOthers(sb: StringBuilder) =
+        sendToOthers(sb.trim('\n').toString())
+
+    override fun equals(other: Any?) =
+        when {
             other is Player -> other.webSocketSession == webSocketSession
             else -> false
         }
-    }
 }
