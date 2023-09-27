@@ -27,7 +27,7 @@ class RoomTemplate(
 
         return if(shopTemplate != null) {
             // todo: fix to avoid passing in empty inventory; doesn't matter much either way
-            RoomShop(id, coordinates, description, connections, Inventory(), shopTemplate.soldItemTemplates)
+            RoomShop(id, coordinates, description, connections, shopTemplate.soldItemTemplates)
         } else if(isBank == "true") {
             RoomBank(id, coordinates, description, connections)
         } else {

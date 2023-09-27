@@ -14,7 +14,7 @@ abstract class ItemTemplate(
 ) {
     val shopItemString = "- $name - $value gold"
     abstract fun createItem(): ItemBase
-    fun createItemAt(room: Room) = room.inventory.items.add(createItem())
+    fun createItemAt(room: Room) = room.addItem(createItem())
     fun matches(str: String): Boolean {
         return name == str
                 || keywords.contains(str)

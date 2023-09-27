@@ -60,9 +60,26 @@ class Player(
             currentRoom.removePlayer(this)
             coordinates = it.coordinates
             currentRoom.addPlayer(this)
+
+            sendCurrentRoomString()
+
             doLook()
         } ?: doUnknown()
     // endregion
+
+    private fun sendCurrentRoomString() {
+        val region = World.regions[coordinates.region]
+        val subregion = region.subregions[coordinates.subregion]
+        val room = subregion.rooms[coordinates.room]
+
+        val message = "ROOM:" + Messages.get(
+            Message.LOOK_CURRENT_ROOM,
+            region.displayString,
+            subregion.toString(),
+            room.roomString
+        )
+        sendToMe(message)
+    }
 
     fun departString(connection: Connection) =
         if (connection.direction != MovementDirection.NONE) {
@@ -77,6 +94,11 @@ class Player(
             // TODO: make this better
             "$name heads over to the ${connection.matchInput.suffix}."
         }
+
+    fun doInitialLook() {
+        sendCurrentRoomString()
+        doLook()
+    }
 
     // region look
     private fun doLook(gameInput: GameInput? = null) =
@@ -101,7 +123,7 @@ class Player(
         } ?: doUnknown()
 
     private fun doLookInItemWithKeyword(keyword: String) =
-        getTypedItemByKeyword<ItemContainer>(keyword)?.let {
+        inventory.getContainerWithKeywordOrNull(keyword)?.let {
             if (it.closed) {
                 sendToMe(Message.ITEM_IS_CLOSED, it.name)
             } else {
@@ -115,6 +137,12 @@ class Player(
         val room = subregion.rooms[coordinates.room]
 
         sendToMe(Message.LOOK_CURRENT_ROOM, region.displayString, subregion.toString(), room.displayString)
+
+        // refresh client entities list
+        // called both when player says "look" and when player moves between rooms
+        // TODO: ugly; make this better
+        sendToMe(currentRoom.npcsTextString)
+        sendToMe(currentRoom.monstersTextString)
     }
     // endregion
 
@@ -162,7 +190,7 @@ class Player(
         if (gameInput.words[2] != "in") {
             doUnknown()
         } else {
-            getTypedItemByKeyword<ItemContainer>(gameInput.words[3])?.let { container ->
+            inventory.getContainerWithKeywordOrNull(gameInput.words[3])?.let { container ->
                 if (container.closed) {
                     sendToMe(Message.ITEM_IS_CLOSED, container.name)
                 } else {
@@ -186,17 +214,17 @@ class Player(
         }
 
     private fun doDropItem(gameInput: GameInput) =
-        inventory.getItemByKeyword(gameInput.suffix)?.let {
-            inventory.items.remove(it)
-            currentRoom.inventory.items.add(it)
+        inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let {
+            inventory.removeItem(it)
+            currentRoom.addItem(it)
             sendToMe(Message.PLAYER_DROPS_ITEM, it.nameWithIndefiniteArticle)
             sendToOthers(Message.OTHER_PLAYER_DROPS_ITEM, name, it.nameWithIndefiniteArticle)
         } ?: doUnknown()
 
     private fun doGetItemFromRoom(gameInput: GameInput) =
-        currentRoom.inventory.getItemByKeyword(gameInput.suffix)?.let { item ->
-            inventory.items.add(item)
-            currentRoom.inventory.items.remove(item)
+        currentRoom.getItemWithKeywordOrNull(gameInput.suffix)?.let { item ->
+            inventory.addItem(item)
+            currentRoom.removeItem(item)
             sendToMe(Message.PLAYER_GETS_ITEM, item.nameWithIndefiniteArticle)
             sendToOthers(Message.OTHER_PLAYER_GETS_ITEM, item.nameWithIndefiniteArticle)
         } ?: doUnknown()
@@ -206,22 +234,20 @@ class Player(
         if (gameInput.words[2] != "from") {
             doUnknown()
         } else {
-            val container = getTypedItemByKeyword<ItemContainer>(gameInput.words[3])
-            container?.let { validContainer ->
-                validContainer.inventory.getItemByKeyword(gameInput.words[1])?.let { validItem ->
-                    inventory.items.add(validItem)
-                    container.inventory.items.remove(validItem)
+            inventory.getContainerWithKeywordOrNull(gameInput.words[3])?.let { container ->
+                container.getAndRemoveItemWithKeywordOrNull(gameInput.words[1])?.let { item ->
+                    inventory.addItem(item)
 
                     sendToMe(
                         Message.PLAYER_GETS_ITEM_FROM_CONTAINER,
-                        validContainer.nameWithIndefiniteArticle,
-                        validItem.nameWithIndefiniteArticle
+                        container.nameWithIndefiniteArticle,
+                        item.nameWithIndefiniteArticle
                     )
                     sendToOthers(
                         Message.OTHER_PLAYER_GETS_ITEM_FROM_CONTAINER,
                         name,
-                        validContainer.nameWithIndefiniteArticle,
-                        validItem.nameWithIndefiniteArticle
+                        container.nameWithIndefiniteArticle,
+                        item.nameWithIndefiniteArticle
                     )
                 } ?: doUnknown()
             } ?: doUnknown()
@@ -238,7 +264,7 @@ class Player(
 
     // region consumables
     private fun doEat(gameInput: GameInput) =
-        getTypedItemByKeyword<ItemFood>(gameInput.suffix)?.let {
+        inventory.getFoodWithKeywordOrNull(gameInput.suffix)?.let {
             if (--it.bites == 0) {
                 inventory.items.remove(it)
 
@@ -251,7 +277,7 @@ class Player(
         } ?: doUnknown()
 
     private fun doDrink(gameInput: GameInput) =
-        getTypedItemByKeyword<ItemDrink>(gameInput.suffix)?.let {
+        inventory.getDrinkWithKeywordOrNull(gameInput.suffix)?.let {
             if (--it.quaffs == 0) {
                 inventory.items.remove(it)
 
@@ -266,7 +292,7 @@ class Player(
 
     // region containers
     private fun doOpenContainer(gameInput: GameInput) =
-        getTypedItemByKeyword<ItemContainer>(gameInput.suffix)?.let {
+        inventory.getContainerWithKeywordOrNull(gameInput.suffix)?.let {
             if (!it.closed) {
                 sendToMe(Message.ITEM_ALREADY_OPEN, it.nameWithIndefiniteArticle)
             } else {
@@ -277,7 +303,7 @@ class Player(
         } ?: doUnknown()
 
     private fun doCloseContainer(gameInput: GameInput) =
-        getTypedItemByKeyword<ItemContainer>(gameInput.suffix)?.let {
+        inventory.getContainerWithKeywordOrNull(gameInput.suffix)?.let {
             if (it.closed) {
                 sendToMe(Message.ITEM_ALREADY_CLOSED, it.nameWithIndefiniteArticle)
             } else {
@@ -300,12 +326,8 @@ class Player(
 
     // region inventory helpers
     private fun getItemWithKeyword(keyword: String): ItemBase? =
-        inventory.getItemByKeyword(keyword)
-            ?: currentRoom.inventory.getItemByKeyword(keyword)
-
-    private inline fun <reified T> getTypedItemByKeyword(keyword: String): T? =
-        inventory.getTypedItemByKeyword<T>(keyword)
-            ?: currentRoom.inventory.getTypedItemByKeyword<T>(keyword)
+        inventory.getItemWithKeywordOrNull(keyword)
+            ?: currentRoom.getItemWithKeywordOrNull(keyword)
     // endregion
 
     // region equip/unequip
@@ -339,16 +361,16 @@ class Player(
 
     private fun doEquipItem(gameInput: GameInput) =
         // find weapon from player inventory
-        inventory.getTypedItemByKeyword<ItemWeapon>(gameInput.words[1])?.let {
+        inventory.getAndRemoveWeaponWithKeywordOrNull(gameInput.words[1])?.let {
             doEquipWeaponFromPlayerInventory(it)
             // find weapon from current room
-        } ?: currentRoom.inventory.getTypedItemByKeyword<ItemWeapon>(gameInput.words[1])?.let {
+        } ?: currentRoom.getAndRemoveWeaponWithKeywordOrNull(gameInput.words[1])?.let {
             doEquipWeaponFromCurrentRoom(it)
             // find armor from player inventory
-        } ?: inventory.getTypedItemByKeyword<ItemArmor>(gameInput.words[1])?.let {
+        } ?: inventory.getAndRemoveArmorWithKeywordOrNull(gameInput.words[1])?.let {
             doEquipArmorFromPlayerInventory(it)
             // find armor from current room
-        } ?: currentRoom.inventory.getTypedItemByKeyword<ItemArmor>(gameInput.words[1])?.let {
+        } ?: currentRoom.getAndRemoveArmorWithKeywordOrNull(gameInput.words[1])?.let {
             doEquipArmorFromCurrentRoom(it)
         } ?: doUnknown()
 
@@ -357,7 +379,7 @@ class Player(
             sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
         } ?: {
             weapon = weaponFromCurrentRoom
-            currentRoom.inventory.items.remove(weaponFromCurrentRoom)
+            currentRoom.removeItem(weaponFromCurrentRoom)
 
             sendToMe(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, weaponFromCurrentRoom.name)
             sendToOthers(Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM, name, weaponFromCurrentRoom.name)
@@ -369,7 +391,7 @@ class Player(
             sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
         } ?: {
             armor = armorFromCurrentRoom
-            currentRoom.inventory.items.remove(armorFromCurrentRoom)
+            currentRoom.removeItem(armorFromCurrentRoom)
 
             sendToMe(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, armorFromCurrentRoom.name)
             sendToOthers(Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM, name, armorFromCurrentRoom.name)
@@ -462,7 +484,7 @@ class Player(
             }
 
             if (deadHostile.inventory.items.isNotEmpty()) {
-                currentRoom.inventory.items.addAll(deadHostile.inventory.items)
+                currentRoom.addInventory(deadHostile.inventory)
 
                 with(
                     Messages.get(
@@ -484,7 +506,7 @@ class Player(
     // region shops
     private fun doSellItem(gameInput: GameInput) =
         (currentRoom as? RoomShop)?.let {
-            inventory.getItemByKeyword(gameInput.suffix)?.let { itemToSell ->
+            inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let { itemToSell ->
                 inventory.items.remove(itemToSell)
                 gold += itemToSell.sellValue
 
@@ -508,7 +530,7 @@ class Player(
 
     private fun doPriceItem(gameInput: GameInput) =
         (currentRoom as? RoomShop)?.run {
-            inventory.getItemByKeyword(gameInput.suffix)?.let {
+            inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let {
                 sendToMe(Message.PLAYER_CAN_SELL_ITEM_HERE, it.name, it.sellValue.toString())
             } ?: doUnknown()
         } ?: doRoomIsNotShop()

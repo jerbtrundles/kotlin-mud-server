@@ -118,7 +118,7 @@ object Messages {
             Message.DEAD_ENTITY_QUIPS_SOLO -> "The ghostly voice of %1 says, \"%2\""
             Message.ENTITY_ARRIVES -> "%1 %2."
             Message.ENTITY_ATTACKS_PLAYER -> "%1 swings at you with their %2."
-            Message.ENTITY_DESTROYS_ITEM -> "%1 destroys %2."
+            Message.ENTITY_DESTROYS_ITEM -> "%1 sweeps %2 into their dustpan."
             Message.ENTITY_DIES -> "%1 dies."
             Message.ENTITY_DRINKS_DRINK_FROM_INVENTORY -> "%1 takes a drink from their %2."
             Message.ENTITY_DRINKS_DRINK_ON_GROUND -> "%1 takes a drink from the %2, which is on the ground."

@@ -54,15 +54,6 @@ class EntityFriendlyNpc(
     // "$stringPrefix$deathName dies."
     override val deathName = nameWithJob
 
-    // "..., a goblin (kneeling), ..."
-    override val nameForCollectionString
-        get() = when {
-            isDead -> "$randomName (dead)"
-            posture == EntityPosture.KNEELING -> "$randomName (kneeling)"
-            posture == EntityPosture.SITTING -> "$randomName (sitting)"
-            else -> name
-        }
-
     override fun calculateAttackPower() =
         attributes.strength + (weapon?.power ?: 0) + Debug.npcAttackBuff
 }

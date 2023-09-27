@@ -50,7 +50,14 @@ abstract class EntityBase(
     abstract val deadConversationalName: String
     abstract val finalCleanupName: String
     abstract val randomName: String
-    abstract val nameForCollectionString: String
+    // "..., a goblin (kneeling), ..."
+    val nameForCollectionString
+        get() = when {
+            isDead -> "$fullName (dead)"
+            posture == EntityPosture.KNEELING -> "$fullName (kneeling)"
+            posture == EntityPosture.SITTING -> "$fullName (sitting)"
+            else -> fullName
+        }
     open val nameForStory = fullName
     val prefixedName
         get() = "$stringPrefix$fullName"
@@ -210,7 +217,7 @@ abstract class EntityBase(
                         appendLine(Message.OTHER_PLAYER_DIES, player.name)
                     }
 
-                    announceToAll(this)
+                    sendToAll(this)
                 }
             }
         }
@@ -244,7 +251,7 @@ abstract class EntityBase(
                     appendLine(randomLivingHostile.deathString)
                 }
 
-                announceToAll(this)
+                sendToAll(this)
             }
         }
 
@@ -258,21 +265,21 @@ abstract class EntityBase(
                     appendLine(Message.ENTITY_SEARCHES_DEAD_ENTITY, capitalizedPrefixedName, deadHostile.name)
 
                     deadHostile.weapon?.let {
-                        currentRoom.inventory.items.add(it)
+                        currentRoom.addItem(it)
                         appendLine("${deadHostile.prefixedName} drops ${it.nameWithIndefiniteArticle}.")
                     }
 
                     deadHostile.armor?.let {
-                        currentRoom.inventory.items.add(it)
+                        currentRoom.addItem(it)
                         appendLine("${deadHostile.prefixedName} drops ${it.nameWithIndefiniteArticle}.")
                     }
 
-                    if (deadHostile.inventory.items.isNotEmpty()) {
-                        currentRoom.inventory.items.addAll(deadHostile.inventory.items)
+                    if (deadHostile.inventory.isNotEmpty()) {
+                        currentRoom.addInventory(deadHostile.inventory)
                         appendLine(deadHostile.dropString(deadHostile.inventory))
                     }
 
-                    announceToAll(this)
+                    sendToAll(this)
                 }
 
                 deadHostile.hasNotBeenSearched = false
@@ -281,7 +288,7 @@ abstract class EntityBase(
 
     // region speak and say
     private fun doDeadSoloQuip() =
-        announceToAll(
+        sendToAll(
             Message.DEAD_ENTITY_QUIPS_SOLO,
             deadConversationalName,
             FlavorText.get(EntityAction.DEAD_QUIP_SOLO)
@@ -292,7 +299,7 @@ abstract class EntityBase(
             doQuipToEntity(it)
         }
 
-    private fun doQuipToEntity(entity: EntityBase) = announceToAll(getQuip(entity))
+    private fun doQuipToEntity(entity: EntityBase) = sendToAll(getQuip(entity))
     private fun getQuip(entity: EntityBase) = when {
         isAlive && entity.isAlive && isHostileTo(entity) -> getLivingToLivingHostileQuip(entity)
         isAlive && entity.isAlive -> getLivingToLivingFriendlyQuip(entity)
@@ -386,21 +393,21 @@ abstract class EntityBase(
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_FRIENDLY_ENTITY)
         )
 
-    fun doMumble() = announceToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
+    fun doMumble() = sendToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
 
-    fun say(what: String) = announceToAll(Message.ENTITY_SAYS, prefixedRandomName, what)
+    fun say(what: String) = sendToAll(Message.ENTITY_SAYS, prefixedRandomName, what)
 
-    fun announceToAll(sb: StringBuilder) = announceToAll(sb.trim('\n').toString())
-    fun announceToAll(what: String) = currentRoom.announceToAll(what)
-    fun announceToAll(message: Message, vararg tokens: String) =
-        currentRoom.announceToAll(Messages.get(message, *tokens))
+    fun sendToAll(sb: StringBuilder) = sendToAll(sb.trim('\n').toString())
+    fun sendToAll(what: String) = currentRoom.sendToAll(what)
+    fun sendToAll(message: Message, vararg tokens: String) =
+        currentRoom.sendToAll(Messages.get(message, *tokens))
     // endregion
 
     // region get items, weapons, armor
     private fun doGetValuableItem() {
-        currentRoom.inventory.getAndRemoveRandomValuableItem()?.let { item ->
+        currentRoom.getAndRemoveRandomValuableItemOrNull()?.let { item ->
             say(FlavorText.get(EntityAction.GET_VALUABLE_ITEM))
-            announceToAll(getString(item))
+            sendToAll(getString(item))
         }
     }
 
@@ -408,11 +415,11 @@ abstract class EntityBase(
         // check personal inventory first
         (inventory.getAndRemoveRandomWeaponOrNull()
         // check room next
-            ?: currentRoom.inventory.getAndRemoveRandomWeaponOrNull())?.let { foundWeapon ->
+            ?: currentRoom.getAndRemoveRandomWeaponOrNull())?.let { foundWeapon ->
             with(StringBuilder()) {
                 weapon?.let { oldWeapon ->
                     appendLine(dropString(oldWeapon))
-                    currentRoom.inventory.items.add(oldWeapon)
+                    currentRoom.addItem(oldWeapon)
                 }
 
                 weapon = foundWeapon
@@ -421,51 +428,51 @@ abstract class EntityBase(
                     appendLine(FlavorText.get(EntityAction.GET_ANY_ITEM))
                 }
                 appendLine(equipString(foundWeapon))
-                announceToAll(this)
+                sendToAll(this)
             }
 
-            announceToAll(equipString(foundWeapon))
+            sendToAll(equipString(foundWeapon))
         } ?: doNothing()
 
     private fun doFindAndEquipAnyArmor() {
-        currentRoom.inventory.getAndRemoveRandomArmorOrNull()?.let { foundArmor ->
+        currentRoom.getAndRemoveRandomArmorOrNull()?.let { foundArmor ->
             armor?.let { oldArmor ->
-                announceToAll(dropString(oldArmor))
-                currentRoom.inventory.items.add(oldArmor)
+                sendToAll(dropString(oldArmor))
+                currentRoom.addItem(oldArmor)
             }
 
             armor = foundArmor
             // TODO: consider flavor text
             // say(FlavorText.get(EntityAction.GET_ANY_ITEM))
-            announceToAll(getString(foundArmor))
+            sendToAll(getString(foundArmor))
         }
     }
 
     private fun doGetAndRemoveRandomItem() =
-        currentRoom.inventory.getAndRemoveRandomItem()?.let { item ->
-            announceToAll(getString(item))
+        currentRoom.getAndRemoveRandomItemOrNull()?.let { item ->
+            sendToAll(getString(item))
             item
         }
 
     private fun doRemoveRandomItem() {
-        currentRoom.inventory.getAndRemoveRandomItem()?.let { item ->
-            announceToAll(destroyString(item))
+        currentRoom.getAndRemoveRandomItemOrNull()?.let { item ->
+            sendToAll(destroyString(item))
         }
     }
 
     private fun doGetRandomBetterWeapon() {
         Debug.println("EntityBase::doGetRandomBetterWeapon()")
-        currentRoom.inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)?.let { newWeapon ->
+        currentRoom.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)?.let { newWeapon ->
             with(StringBuilder()) {
                 weapon?.let { oldWeapon ->
                     appendLine(dropString(oldWeapon))
-                    currentRoom.inventory.items.add(oldWeapon)
+                    currentRoom.addItem(oldWeapon)
                 }
 
                 weapon = newWeapon
                 appendLine(getString(newWeapon))
 
-                announceToAll(this)
+                sendToAll(this)
             }
         } ?: {
             Debug.println("EntityBase::doGetRandomWeapon() - no weapon in current room")
@@ -474,17 +481,17 @@ abstract class EntityBase(
     }
 
     private fun doGetRandomBetterArmor() {
-        currentRoom.inventory.getAndRemoveRandomBetterArmorOrNull((armor?.defense?.plus(1)) ?: 0)?.let { newArmor ->
+        currentRoom.getAndRemoveRandomBetterArmorOrNull((armor?.defense?.plus(1)) ?: 0)?.let { newArmor ->
             with(StringBuilder()) {
                 armor?.let { oldArmor ->
-                    currentRoom.inventory.items.add(oldArmor)
+                    currentRoom.addItem(oldArmor)
                     appendLine(dropString(oldArmor))
                 }
 
                 armor = newArmor
                 appendLine(getString(newArmor))
 
-                announceToAll(this)
+                sendToAll(this)
             }
         } ?: doNothing()
 
@@ -493,52 +500,43 @@ abstract class EntityBase(
     }
 
     private fun foundBetterArmor() =
-        // if we find armor in the current room...
-        currentRoom.inventory.getBestArmorOrNull()?.let { bestArmor ->
+        (inventory.getBestArmorOrNull() ?: currentRoom.getBestArmorOrNull())?.let { bestArmor ->
             // if we already have armor equipped...
-            armor?.let {
+            armor?.let { myArmor ->
                 // return whether my defense is less than best-in-room
-                it.defense < bestArmor.defense
+                myArmor.defense < bestArmor.defense
                 // found armor, and I have none equipped
             } ?: true
             // didn't find armor
         } ?: false
 
     private fun foundBetterWeapon() =
-        currentRoom.inventory.getBestWeaponOrNull()?.let { bestWeapon ->
-            weapon?.let {
-                it.power < bestWeapon.power
+        (inventory.getBestWeaponOrNull() ?: currentRoom.getBestWeaponOrNull())?.let { bestWeapon ->
+            weapon?.let { myWeapon ->
+                myWeapon.power < bestWeapon.power
             } ?: true // found a weapon, and I have nothing equipped
         } ?: false // didn't find a weapon
-
-    private fun doGetRandomItemFromRoom() =
-        currentRoom.inventory.items.randomOrNull()?.let { item ->
-            inventory.items.add(item)
-            currentRoom.inventory.items.remove(item)
-
-            announceToAll(getString(item))
-        }
     // endregion
 
     // region posture
     private fun doSit() {
         if (posture != EntityPosture.SITTING) {
             posture = EntityPosture.SITTING
-            announceToAll(sitString)
+            sendToAll(sitString)
         }
     }
 
     protected fun doStand() {
         if (posture != EntityPosture.STANDING) {
             posture = EntityPosture.STANDING
-            announceToAll(standString)
+            sendToAll(standString)
         }
     }
 
     private fun doKneel() {
         if (posture != EntityPosture.KNEELING) {
             posture = EntityPosture.KNEELING
-            announceToAll(kneelString)
+            sendToAll(kneelString)
         }
     }
     // endregion
@@ -575,7 +573,7 @@ abstract class EntityBase(
     }
 
     fun doEatRandomFoodItem() =
-        inventory.getRandomTypedItemOrNull<ItemFood>()?.let { foodFromInventory ->
+        inventory.getRandomFoodOrNull()?.let { foodFromInventory ->
             with(StringBuilder()) {
                 appendLine(
                     Messages.get(
@@ -587,26 +585,26 @@ abstract class EntityBase(
 
                 if (--foodFromInventory.bites == 0) {
                     appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                    currentRoom.inventory.items.remove(foodFromInventory)
+                    currentRoom.removeItem(foodFromInventory)
                 }
 
-                announceToAll(this)
+                sendToAll(this)
             }
-        } ?: currentRoom.inventory.getRandomTypedItemOrNull<ItemFood>()?.let { foodFromRoom ->
+        } ?: currentRoom.getRandomFoodOrNull()?.let { foodFromRoom ->
             with(StringBuilder()) {
                 appendLine(Message.ENTITY_EATS_FOOD_ON_GROUND, prefixedRandomName, foodFromRoom.name)
 
                 if (--foodFromRoom.bites == 0) {
                     appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                    currentRoom.inventory.items.remove(foodFromRoom)
+                    currentRoom.removeItem(foodFromRoom)
                 }
 
-                announceToAll(this)
+                sendToAll(this)
             }
         } ?: doNothing()
 
     fun doDrinkRandomDrinkItem() =
-        inventory.getRandomTypedItemOrNull<ItemDrink>()?.let { drinkFromInventory ->
+        inventory.getRandomDrinkOrNull()?.let { drinkFromInventory ->
             with(StringBuilder()) {
                 appendLine(
                     Messages.get(
@@ -618,27 +616,27 @@ abstract class EntityBase(
 
                 if (--drinkFromInventory.quaffs == 0) {
                     appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                    currentRoom.inventory.items.remove(drinkFromInventory)
+                    currentRoom.removeItem(drinkFromInventory)
                 }
 
-                announceToAll(this)
+                sendToAll(this)
             }
-        } ?: currentRoom.inventory.getRandomTypedItemOrNull<ItemDrink>()?.let { drinkFromRoom ->
+        } ?: currentRoom.getRandomDrinkOrNull()?.let { drinkFromRoom ->
             with(StringBuilder()) {
                 appendLine(Message.ENTITY_DRINKS_DRINK_ON_GROUND, prefixedRandomName, drinkFromRoom.name)
 
                 if (--drinkFromRoom.quaffs == 0) {
                     appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
-                    currentRoom.inventory.items.remove(drinkFromRoom)
+                    currentRoom.removeItem(drinkFromRoom)
                 }
 
-                announceToAll(this)
+                sendToAll(this)
             }
         } ?: doNothing()
 
     private fun doIdle() = doAction(EntityBehavior.randomIdleAction())
     private fun doIdleFlavorAction() =
-        announceToAll(
+        sendToAll(
             FlavorText.get(EntityAction.IDLE_FLAVOR_ACTION)
                 .replace(
                     oldValue = "capitalizedConversationalName",
@@ -698,8 +696,8 @@ abstract class EntityBase(
 
             EntitySituation.FOUND_GOOD_ARMOR -> false
             EntitySituation.FOUND_GOOD_ITEM -> false
-            EntitySituation.FOUND_ANY_ITEM -> currentRoom.inventory.items.isNotEmpty()
-            EntitySituation.FOUND_VALUABLE_ITEM -> currentRoom.inventory.items.any { it.value > Debug.valuableItemMinimumValue }
+            EntitySituation.FOUND_ANY_ITEM -> currentRoom.containsItem
+            EntitySituation.FOUND_VALUABLE_ITEM -> currentRoom.containsValuableItem
 
             EntitySituation.FOUND_GOOD_WEAPON -> false
             EntitySituation.WITH_OTHER_MONSTER_SAME_TYPE -> false
@@ -711,20 +709,20 @@ abstract class EntityBase(
             EntitySituation.FOUND_BETTER_ARMOR -> foundBetterArmor()
             EntitySituation.FOUND_BETTER_WEAPON -> foundBetterWeapon()
 
-            EntitySituation.WEAPON_IN_CURRENT_ROOM -> inventory.items.any { it is ItemWeapon }
-            EntitySituation.ARMOR_IN_CURRENT_ROOM -> inventory.items.any { it is ItemArmor }
+            EntitySituation.WEAPON_IN_CURRENT_ROOM -> inventory.containsWeapon()
+            EntitySituation.ARMOR_IN_CURRENT_ROOM -> inventory.containsArmor()
 
             EntitySituation.NO_EQUIPPED_WEAPON -> weapon == null
             EntitySituation.NO_EQUIPPED_ARMOR -> armor == null
 
             EntitySituation.ANY_UNSEARCHED_DEAD_HOSTILES -> deadAndUnsearchedHostilesCount > 0
 
-            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_WEAPON -> inventory.containsWeapon || currentRoom.containsWeapon
-            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_ARMOR -> inventory.containsArmor || currentRoom.containsArmor
-            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_FOOD -> inventory.containsFood || currentRoom.containsFood
-            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_DRINK -> inventory.containsDrink || currentRoom.containsDrink
-            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_JUNK -> inventory.containsJunk || currentRoom.containsJunk
-            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_CONTAINER -> inventory.containsContainer || currentRoom.containsContainer
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_WEAPON -> inventory.containsWeapon() || currentRoom.containsWeapon()
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_ARMOR -> inventory.containsArmor() || currentRoom.containsArmor()
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_FOOD -> inventory.containsFood() || currentRoom.containsFood()
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_DRINK -> inventory.containsDrink() || currentRoom.containsDrink()
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_JUNK -> inventory.containsJunk() || currentRoom.containsJunk()
+            EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_CONTAINER -> inventory.containsContainer() || currentRoom.containsContainer()
 
             EntitySituation.ANY -> true
             else -> false
@@ -743,8 +741,8 @@ abstract class EntityBase(
     }
 
     fun doFinalCleanup() {
-        announceToAll(Message.DEAD_ENTITY_DECAYS, finalCleanupName)
-        currentRoom.entities.remove(this)
+        sendToAll(Message.DEAD_ENTITY_DECAYS, finalCleanupName)
+        currentRoom.removeEntity(this)
     }
     // endregion
 }

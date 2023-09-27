@@ -22,7 +22,7 @@ fun Application.configureSockets() {
 
             val player = Player("Namey Name", this)
             World.zero.addPlayer(player)
-            player.onInput("look")
+            player.doInitialLook()
 
             for (frame in incoming) {
                 if (frame is Frame.Text) {

@@ -15,7 +15,7 @@ class ItemContainer(
     @Json(ignored = true)
     var closed: Boolean = true
 ) : ItemBase(name, description, weight, value, keywords) {
-    constructor(template: ItemTemplateContainer): this(
+    constructor(template: ItemTemplateContainer) : this(
         template.name,
         template.description,
         template.weight,
@@ -24,9 +24,13 @@ class ItemContainer(
     )
 
     val inventoryString: String
-    get() = if (inventory.items.isEmpty()) {
+        get() = if (inventory.items.isEmpty()) {
             "You don't see anything in the $name."
         } else {
             "In the $name, you see ${inventory.collectionString}."
         }
+
+    fun getAndRemoveItemWithKeywordOrNull(keyword: String) =
+        inventory.getAndRemoveItemWithKeywordOrNull(keyword)
+
 }

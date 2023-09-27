@@ -6,8 +6,7 @@ class RoomBank(
     id: Int,
     coordinates: WorldCoordinates,
     description: String,
-    connections: List<Connection>,
-    inventory: Inventory = Inventory()
-): Room(id, coordinates, description, connections, inventory) {
+    connections: List<Connection>
+): Room(id, coordinates, description, connections) {
     override fun toString() = "Bank: $coordinates"
 }

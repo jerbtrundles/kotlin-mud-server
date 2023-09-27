@@ -8,9 +8,8 @@ class RoomShop(
     coordinates: WorldCoordinates,
     description: String,
     connections: List<Connection>,
-    inventory: Inventory = Inventory(),
     val soldItemTemplates: List<ItemTemplate>
-): Room(id, coordinates, description, connections, inventory) {
+): Room(id, coordinates, description, connections) {
     override fun toString() = "Shop: $coordinates"
 
     val itemsString: String

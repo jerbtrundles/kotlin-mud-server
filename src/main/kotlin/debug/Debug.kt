@@ -14,8 +14,8 @@ object Debug {
 
     const val valuableItemMinimumValue = 200
     const val maxNpcs = 10
-    const val maxMonsters = 10
-    const val maxJanitors = 5
+    const val maxMonsters = 5
+    const val maxJanitors = 0
     const val npcDelayMin = 2000
     const val npcDelayMax = 3000
     const val monsterDelayMin = 3000
@@ -23,13 +23,13 @@ object Debug {
     const val monsterMaxLevel = 5
     const val monsterAttackDebuff = 30
     const val npcAttackBuff = 0
-    private const val initialWeapons = 0
-    private const val initialArmor = 0
-    private const val initialJunk = 0
-    private const val initialExpensiveJunk = 0
-    private const val initialFood = 20
-    private const val initialDrink = 20
-    private const val initialContainer = 0
+    private const val initialWeapons = 15
+    private const val initialArmor = 15
+    private const val initialJunk = 15
+    private const val initialExpensiveJunk = 15
+    private const val initialFood = 15
+    private const val initialDrink = 15
+    private const val initialContainer = 15
 
     fun println(str: String) {
         if (debugging) {

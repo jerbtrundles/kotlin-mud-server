@@ -47,14 +47,6 @@ class EntityMonster(
     override val deadConversationalName = "the spirit of $conversationalName"
     override val arriveName = name.withIndefiniteArticle(capitalized = true)
     override val deathName = name
-    override val nameForCollectionString
-        get() = when {
-            isDead && !hasNotBeenSearched -> "dead $name (searched)"
-            isDead -> "dead $name"
-            posture == EntityPosture.KNEELING -> "$name (kneeling)"
-            posture == EntityPosture.SITTING -> "$name (sitting)"
-            else -> name
-        }
     // "...says to $conversationalName, 'Hello!'"
     override val conversationalName
         get() = "the $name"

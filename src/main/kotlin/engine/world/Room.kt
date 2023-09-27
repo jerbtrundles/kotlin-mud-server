@@ -1,12 +1,11 @@
 package engine.world
 
-import engine.Inventory
-import engine.Message
-import engine.Messages
+import engine.*
 import engine.entity.*
 import engine.utility.Common
 import engine.player.Player
 import engine.game.GameInput
+import engine.item.ItemBase
 import engine.item.ItemWeapon
 import engine.player.PlayerAction
 import java.util.UUID
@@ -16,39 +15,42 @@ open class Room(
     val coordinates: WorldCoordinates,
     val description: String,
     val connections: List<Connection>,
-    val inventory: Inventory = Inventory(),
     val entities: MutableList<EntityBase> = mutableListOf()
 ) {
     private val uuid = UUID.randomUUID()!!
+    private val inventory = Inventory()
+    val containsItem
+        get() = inventory.isNotEmpty()
+    val containsValuableItem
+        get() = inventory.containsValuableItem
 
-    fun matchingConnectionOrNull(gameInput: GameInput) = connections.firstOrNull { it.equals(gameInput) }
-
+    // region entities
     val monsters
         get() = entities.filter { it.faction.faction == EntityFactions.MONSTER }
     val npcs
         get() = entities.filter { it.faction.faction == EntityFactions.NPC }
-
     var players = mutableListOf<Player>()
     val hasNoEntities
         get() = entities.isEmpty() && players.isEmpty()
 
+    fun containsLivingPlayer() = players.any { it.isAlive }
+    fun containsLivingEntity() = entities.any { it.isAlive }
+
+    fun addEntity(entity: EntityBase) {
+        entities.add(entity)
+        sendToAll(entity.arriveString)
+
+        sendEntitiesStringsToPlayers()
+    }
+    // endregion
+
+    // region strings
     private val directionalExitsString = "Obvious exits: " +
             connections.filter { connection ->
                 connection.matchInput.action == PlayerAction.MOVE
             }.joinToString { connection ->
                 connection.matchInput.suffix
             }
-
-    private val entitiesString
-        get() = if (entities.isEmpty()) {
-            ""
-        } else {
-            "You also see " +
-                    Common.collectionString(
-                        itemStrings = entities.map { it.nameForCollectionString },
-                        includeIndefiniteArticles = false
-                    ) + ".\n"
-        }
 
     private val npcsString: String
         get() = if (npcs.isEmpty()) {
@@ -72,7 +74,7 @@ open class Room(
         }
 
     private val inventoryString: String
-        get() = if (inventory.items.isEmpty()) {
+        get() = if (inventory.isEmpty()) {
             ""
         } else {
             "You also see ${inventory.collectionString}.\n"
@@ -89,23 +91,31 @@ open class Room(
             .append(directionalExitsString)
             .toString()
 
-    fun containsLivingPlayer() = players.any { it.isAlive }
-    fun containsLivingEntity() = entities.any { it.isAlive }
+    val roomString
+        get() = StringBuilder()
+            .appendLine(description)
+            .append(directionalExitsString)
+            .toString()
 
-    fun addEntity(entity: EntityBase) {
-        entities.add(entity)
-        announceToAll(entity.arriveString)
+    val npcsTextString
+        get() = "NPCS:${npcs.joinToString(separator = "\n") { it.nameForCollectionString }}"
+    val monstersTextString
+        get() = "MONSTERS:${monsters.joinToString(separator = "\n") { it.nameForCollectionString }}"
+    val itemsTextString
+        get() = inventory.itemsTextString
+    // endregion
+
+    // region player
+    fun sendDebugTextString(str: String) =
+        sendToAll("DEBUG:$str")
+
+    fun sendEntitiesStringsToPlayers() {
+        sendToAll(npcsTextString)
+        sendToAll(monstersTextString)
     }
-
-    fun removeEntity(entity: EntityBase, connection: Connection? = null) {
-        entities.remove(entity)
-        connection?.let {
-            announceToAll(entity.departString(connection))
-        }
-    }
-
     fun addPlayer(player: Player) {
         players.add(player)
+        player.sendToMe(itemsTextString)
         sendToOthers(player, player.arriveString)
     }
 
@@ -115,17 +125,11 @@ open class Room(
             sendToOthers(player, player.departString(connection))
         } ?: sendToOthers(player, Message.PLAYER_LEAVES_GAME, player.name)
     }
-
-    fun firstLivingHostileToPlayerOrNull(keyword: String) =
-        firstHostileToPlayerOrNull(keyword)?.let { it.isAlive }
-
-    fun randomLivingHostileToPlayerOrNull(keyword: String) =
-        entities.filter {
+    fun firstHostileToPlayerOrNull(keyword: String) =
+        entities.firstOrNull {
             it.isHostileTo(EntityFactions.PLAYER)
-                    && !it.isDead
                     && it.matchesKeyword(keyword)
-        }.randomOrNull()
-
+        }
     fun firstDeadAndUnsearchedHostileToPlayerOrNull(suffix: String) =
         entities.firstOrNull {
             it.matchesKeyword(suffix)
@@ -135,7 +139,9 @@ open class Room(
 
     fun randomLivingPlayerOrNull() =
         players.filter { it.isAlive }.randomOrNull()
+    // endregion
 
+    // region entities
     fun randomLivingHostileOrNull(faction: EntityFaction) =
         entities.filter {
             it.faction.isHostileTo(faction)
@@ -146,19 +152,35 @@ open class Room(
             it.faction.isHostileTo(faction)
                     && it.matchesKeyword(keyword)
         }.randomOrNull()
-
-    fun firstHostileToPlayerOrNull(keyword: String) =
-        entities.firstOrNull {
-            it.isHostileTo(EntityFactions.PLAYER)
-                    && it.matchesKeyword(keyword)
+    fun removeEntity(entity: EntityBase, connection: Connection? = null) {
+        entities.remove(entity)
+        connection?.let {
+            sendToAll(entity.departString(connection))
         }
 
-    val containsWeapon get() = inventory.containsWeapon
-    val containsArmor get() = inventory.containsArmor
-    val containsFood get() = inventory.containsFood
-    val containsDrink get() = inventory.containsDrink
-    val containsJunk get() = inventory.containsJunk
-    val containsContainer get() = inventory.containsContainer
+        sendEntitiesStringsToPlayers()
+    }
+    // endregion
+
+    // region contains item type
+    fun containsWeapon() =
+        inventory.containsWeapon()
+
+    fun containsArmor() =
+        inventory.containsArmor()
+
+    fun containsFood() =
+        inventory.containsFood()
+
+    fun containsDrink() =
+        inventory.containsDrink()
+
+    fun containsJunk() =
+        inventory.containsJunk()
+
+    fun containsContainer() =
+        inventory.containsContainer()
+    // endregion
 
     // region uuid -> equality, hash code
     override fun hashCode() = uuid.hashCode()
@@ -167,13 +189,13 @@ open class Room(
     // endregion
 
     // region announce
-    fun announceToAll(str: String) =
+    fun sendToAll(str: String) =
         players.forEach { player ->
             player.sendToMe(str)
         }
 
-    fun announceToAll(message: Message, vararg tokens: String) =
-        announceToAll(Messages.get(message, *tokens))
+    fun sendToAll(message: Message, vararg tokens: String) =
+        sendToAll(Messages.get(message, *tokens))
 
     fun sendToOthers(announcingPlayer: Player, message: Message, vararg tokens: String) =
         sendToOthers(announcingPlayer, Messages.get(message, *tokens))
@@ -184,15 +206,74 @@ open class Room(
                 it.sendToMe(str)
             }
         }
+    // endregion
 
-    fun sendToAll(str: String) =
-        players.forEach {
-            it.sendToMe(str)
+    // region add/remove item/inventory
+    private fun sendItemListToPlayer() = sendToAll(inventory.itemsTextString)
+    fun addItem(item: ItemBase) {
+        inventory.addItem(item)
+        sendItemListToPlayer()
+    }
+
+    fun removeItem(item: ItemBase) {
+        inventory.removeItem(item)
+        sendItemListToPlayer()
+    }
+
+    fun addInventory(inventory: Inventory) {
+        inventory.addInventory(inventory)
+        sendItemListToPlayer()
+    }
+    // endregion
+
+    // region items
+    fun getAndRemoveRandomValuableItemOrNull() =
+        inventory.getAndRemoveRandomValuableItem()?.let {
+            sendItemListToPlayer()
+            it
         }
 
-    fun sendToAll(message: Message, vararg tokens: String) =
-        sendToAll(Messages.get(message, *tokens))
+    fun getAndRemoveRandomWeaponOrNull() =
+        inventory.getAndRemoveRandomWeaponOrNull()?.let {
+            sendItemListToPlayer()
+            it
+        }
+
+    fun getAndRemoveRandomArmorOrNull() =
+        inventory.getAndRemoveRandomArmorOrNull()?.let {
+            sendItemListToPlayer()
+            it
+        }
+
+    fun getAndRemoveRandomBetterArmorOrNull(minRequiredDefense: Int) =
+        inventory.getAndRemoveRandomBetterArmorOrNull(minRequiredDefense)?.let {
+            sendItemListToPlayer()
+            it
+        }
+
+    fun getAndRemoveRandomItemOrNull() =
+        inventory.getAndRemoveRandomItem()?.let {
+            sendItemListToPlayer()
+            it
+        }
+
+    fun getBestWeaponOrNull() = inventory.getBestWeaponOrNull()
+    fun getBestArmorOrNull() = inventory.getBestArmorOrNull()
+    fun getRandomFoodOrNull() = inventory.getRandomFoodOrNull()
+    fun getRandomDrinkOrNull() = inventory.getRandomDrinkOrNull()
+    fun getAndRemoveRandomBetterWeaponOrNull(minRequiredPower: Int) =
+        inventory.getAndRemoveRandomBetterWeaponOrNull(minRequiredPower)?.let {
+            sendItemListToPlayer()
+            it
+        }
+
+    fun getItemWithKeywordOrNull(keyword: String) = inventory.getItemWithKeywordOrNull(keyword)
+    fun getAndRemoveWeaponWithKeywordOrNull(keyword: String) = inventory.getAndRemoveWeaponWithKeywordOrNull(keyword)
+    fun getAndRemoveArmorWithKeywordOrNull(keyword: String) = inventory.getAndRemoveArmorWithKeywordOrNull(keyword)
     // endregion
+
+    fun matchingConnectionOrNull(gameInput: GameInput) =
+        connections.firstOrNull { it.equals(gameInput) }
 }
 
 // find an item, item comes with fluff text, maybe a story
