@@ -7,7 +7,7 @@ object ShopTemplates {
 
     fun load(c: Class<() -> Unit>) {
         try {
-            templates = Common.parseArrayFromJson(c, "shops.json")
+            templates = Common.parseArrayFromJson(c, "/shops.json")
         } catch (e: Exception) {
             println(e.message)
         }

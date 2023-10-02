@@ -35,6 +35,7 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             listOf(
                 EntityPreference.defaultPreferenceFindBetterWeapon,
                 EntityPreference.defaultPreferenceFindBetterArmor,
+                EntityPreference.defaultPreferenceFoundValuableItem,
                 EntityPreference.janitorPreferenceDestroyItemInRoom,
                 EntityPreference.defaultPreferenceSearchDeadHostile
             )

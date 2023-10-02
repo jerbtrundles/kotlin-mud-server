@@ -1,0 +1,16 @@
+[
+  {
+    "name": "ruby",
+    "description": "A sparkling ruby. It's worth a lot.",
+    "weight": 0.1,
+    "value": 250,
+    "keywords": ["ruby"]
+  },
+  {
+    "name": "diamond",
+    "description": "A sparkling diamond. It's worth a lot",
+    "weight": 0.1,
+    "value": 500,
+    "keywords": ["diamond"]
+  }
+]

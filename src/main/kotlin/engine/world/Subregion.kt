@@ -7,7 +7,8 @@ class Subregion(
     val name: String,
     val rooms: List<Room>
 ) {
-    override fun toString() = name
+    override fun toString() = "Subregion: $id - $name"
+    val displayString = name
 
     fun toDebugString(): String {
         val sb = StringBuilder()

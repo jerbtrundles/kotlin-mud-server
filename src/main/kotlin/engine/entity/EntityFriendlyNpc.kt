@@ -3,6 +3,8 @@ package engine.entity
 import debug.Debug
 import engine.Inventory
 import engine.entity.behavior.EntityBehavior
+import engine.item.ItemArmor
+import engine.item.ItemWeapon
 
 class EntityFriendlyNpc(
     name: String,
@@ -15,7 +17,9 @@ class EntityFriendlyNpc(
     delayMin: Int = Debug.npcDelayMin,
     delayMax: Int = Debug.npcDelayMax,
     attributes: EntityAttributes = EntityAttributes.defaultNpc,
-    inventory: Inventory = Inventory.defaultNpc()
+    inventory: Inventory = Inventory.defaultNpc(),
+    weapon: ItemWeapon? = null,
+    armor: ItemArmor? = null
 ) : EntityBase(
     faction = EntityFaction.factionNpc,
     name = name,
@@ -29,7 +33,9 @@ class EntityFriendlyNpc(
     delayMin = delayMin,
     delayMax = delayMax,
     arriveStringSuffix = arriveStringSuffix,
-    inventory = inventory
+    inventory = inventory,
+    weapon = weapon,
+    armor = armor
 ) {
     override val deadConversationalName
         get() = "the spirit of $randomName"

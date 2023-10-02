@@ -10,6 +10,7 @@ object ItemTemplates {
     var containers = listOf<ItemTemplateContainer>()
     var weapons = listOf<ItemTemplateWeapon>()
     var armor = listOf<ItemTemplateArmor>()
+    var gems = listOf<ItemTemplateGem>()
 
     fun load(c: Class<() -> Unit>) {
         loadJunk(c)
@@ -18,6 +19,7 @@ object ItemTemplates {
         loadContainers(c)
         loadWeapons(c)
         loadArmor(c)
+        loadGems(c)
     }
 
     private fun loadArmor(c: Class<() -> Unit>) {
@@ -56,6 +58,12 @@ object ItemTemplates {
         Debug.println("Done loading drinks. We have ${drinks.size} drinks.")
     }
 
+    private fun loadGems(c: Class<() -> Unit>) {
+        Debug.println("Loading gems...")
+        gems = Common.parseArrayFromJson(c, "/items-gem.json")
+        Debug.println("Done loading gems. We have ${gems.size} shiny and valuable rocks.")
+    }
+
     fun find(itemString: String): ItemTemplate {
         return weapons.firstOrNull { template -> template.matches(itemString) }
             ?: armor.firstOrNull { template -> template.matches(itemString) }
@@ -63,6 +71,10 @@ object ItemTemplates {
             ?: drinks.firstOrNull { template -> template.matches(itemString) }
             ?: junk.firstOrNull { template -> template.matches(itemString) }
             ?: containers.firstOrNull { template -> template.matches(itemString) }
+            ?: gems.firstOrNull { template -> template.matches(itemString) }
             ?: throw Exception("No item template match for keyword: $itemString. This should never happen.")
     }
+
+    fun createItemFromString(itemString: String) =
+        find(itemString).createItem()
 }

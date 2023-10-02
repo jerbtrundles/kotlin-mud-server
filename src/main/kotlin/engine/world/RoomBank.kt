@@ -1,7 +1,5 @@
 package engine.world
 
-import engine.Inventory
-
 class RoomBank(
     id: Int,
     coordinates: WorldCoordinates,

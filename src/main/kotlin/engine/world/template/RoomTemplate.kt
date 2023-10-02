@@ -1,9 +1,7 @@
 package engine.world.template
 
-import engine.Inventory
 import com.beust.klaxon.Json
 import engine.world.*
-import engine.world.template.ShopTemplates.templates
 
 class RoomTemplate(
     @Json(name = "room-id")
@@ -14,6 +12,8 @@ class RoomTemplate(
     val description: String,
     @Json(name = "room-connections")
     val connections: List<Connection>,
+    @Json(name = "room-is-shop")
+    val isShop: String = "false",
     @Json(name = "room-is-bank")
     val isBank: String = "false"
 ) {
@@ -21,18 +21,16 @@ class RoomTemplate(
     val coordinates = WorldCoordinates.parseFromString(coordinatesString)
 
     fun toRoom(): Room {
-        val shopTemplate = templates.firstOrNull { shopTemplate ->
-            shopTemplate.coordinates == coordinates
-        }
+        return if (isShop == "true") {
+            val shopTemplate = ShopTemplates.templates.firstOrNull { shopTemplate ->
+                shopTemplate.coordinates == coordinates
+            } ?: throw Exception("Couldn't find matching shop template at coordinates: $coordinatesString.")
 
-        return if(shopTemplate != null) {
-            // todo: fix to avoid passing in empty inventory; doesn't matter much either way
             RoomShop(id, coordinates, description, connections, shopTemplate.soldItemTemplates)
-        } else if(isBank == "true") {
+        } else if (isBank == "true") {
             RoomBank(id, coordinates, description, connections)
         } else {
-            Room(id, coordinates, description, connections
-            )
+            Room(id, coordinates, description, connections)
         }
     }
 }

@@ -109,6 +109,7 @@ enum class Message {
     PLAYER_STANDS_UP,
     PLAYER_WITHDRAWS_GOLD,
     UNHANDLED_PLAYER_INPUT,
+    ENTITY_LEAVES_GAME
 }
 
 object Messages {
@@ -218,6 +219,8 @@ object Messages {
             Message.PLAYER_STANDS_UP -> "You stand up."
             Message.PLAYER_WITHDRAWS_GOLD -> "You withdraw %1 gold."
             Message.UNHANDLED_PLAYER_INPUT -> "I don't know, boss. Try something else."
+            Message.ENTITY_LEAVES_GAME -> "%1 leaves."
+
             else -> throw(Exception("error: invalid string"))
         }
 

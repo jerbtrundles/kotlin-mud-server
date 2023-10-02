@@ -27,6 +27,15 @@ class Inventory(
                 return this
             }
         }
+
+        fun parseFromStringList(itemStrings: List<String>) =
+            if (itemStrings.isNotEmpty()) {
+                Inventory(
+                    items = Collections.synchronizedList(itemStrings.map { ItemTemplates.createItemFromString(it) }.toMutableList())
+                )
+            } else {
+                Inventory()
+            }
     }
 
     // region empty checks
@@ -44,7 +53,7 @@ class Inventory(
     // endregion
 
     // region add/remove
-    fun addInventory(inventory: Inventory) = items.addAll(inventory.items)
+    fun addInventory(other: Inventory) = items.addAll(other.items)
     fun addItem(item: ItemBase) = items.add(item)
     private fun randomChanceAddItemToList(templates: List<ItemTemplate>, percentChance: Int = 20) =
         d100(percentChance) {
@@ -66,8 +75,10 @@ class Inventory(
 
     fun containsFood() =
         items.any { it is ItemFood }
+
     fun containsDrink() =
         items.any { it is ItemDrink }
+
     fun containsContainer() =
         items.any { it is ItemContainer }
 

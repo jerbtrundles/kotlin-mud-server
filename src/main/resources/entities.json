@@ -16,6 +16,28 @@
     }
   },
   {
+    "name": "treasure goblin",
+    "keywords": [],
+    "level": 1,
+    "experience": 5,
+    "gold": 100,
+    "attributes": {
+      "strength": 5,
+      "intelligence": 5,
+      "vitality": 5,
+      "speed": 5,
+      "defense": 0,
+      "health": 5,
+      "magic": 0
+    },
+    "items": [
+      "ruby",
+      "diamond",
+      "ruby",
+      "diamond"
+    ]
+  },
+  {
     "name": "lesser orc",
     "keywords": [
       "orc"

@@ -216,6 +216,7 @@
             "room-id": 0,
             "room-coordinates": "0, 1, 0",
             "room-description": "This is the weapons shop.",
+            "room-is-shop": "true",
             "room-connections": [
               {
                 "connection-coordinates": "0, 0, 2",
@@ -233,13 +234,13 @@
             "room-id": 0,
             "room-coordinates": "0, 2, 0",
             "room-description": "This is the town bank.",
+            "room-is-bank": "true",
             "room-connections": [
               {
                 "connection-coordinates": "0, 0, 3",
                 "connection-input": "go out"
               }
-            ],
-            "room-is-bank": "true"
+            ]
           }
         ]
       }

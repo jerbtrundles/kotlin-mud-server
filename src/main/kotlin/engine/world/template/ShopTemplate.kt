@@ -10,7 +10,7 @@ class ShopTemplate(
     @Json(name = "coordinates")
     val coordinatesString: String,
     @Json(name = "items")
-    val itemStrings: List<String>
+    val itemStrings: Array<String>
 ) {
     @Json(ignored = true)
     val coordinates = WorldCoordinates.parseFromString(coordinatesString)

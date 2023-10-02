@@ -1,5 +1,6 @@
 package engine.entity
 
+import com.beust.klaxon.Json
 import engine.Inventory
 import engine.item.template.ItemTemplates
 
@@ -9,9 +10,11 @@ class EntityMonsterTemplate(
     val attributes: EntityAttributes,
     val keywords: List<String>,
     val experience: Int,
-    val gold: Int
+    val gold: Int,
+    @Json(name = "items")
+    val itemsString: List<String> = listOf()
 ) {
-    fun create(inventory: Inventory = Inventory()) = EntityMonster(
+    fun create() = EntityMonster(
         level = this.level,
         monsterName = this.name,
         experience = this.experience,
@@ -25,7 +28,7 @@ class EntityMonsterTemplate(
             maximumHealth = this.attributes.maximumHealth,
             maximumMagic = this.attributes.maximumMagic
         ),
-        inventory = inventory,
+        inventory = Inventory.parseFromStringList(itemsString),
         keywords = this.keywords,
         armor = ItemTemplates.armor.getOrNull(0)?.createItem(),
         weapon = ItemTemplates.weapons.getOrNull(0)?.createItem()

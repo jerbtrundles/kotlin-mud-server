@@ -5,6 +5,8 @@ import engine.Inventory
 import engine.utility.Common
 import engine.entity.behavior.EntityBehavior
 import engine.game.Game
+import engine.item.ItemWeapon
+import engine.item.template.ItemTemplates
 import kotlinx.coroutines.launch
 import engine.world.World
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +68,8 @@ object EntityManager {
         behavior = EntityBehavior.janitor,
         arriveStringSuffix = "arrives, broom in hand",
         delayMin = 500,
-        delayMax = 1000
+        delayMax = 1000,
+        weapon = ItemTemplates.createItemFromString("broom") as ItemWeapon
     )
 
     private fun createBerserker() = EntityFriendlyNpc(
@@ -81,7 +84,7 @@ object EntityManager {
     private fun createRandomMonster() = EntityTemplates
         .monsterTemplates
         .random()
-        .create(inventory = Inventory.createWithRandomStuff())
+        .create()
     // endregion
 
     // region remove entities

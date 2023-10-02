@@ -28,5 +28,15 @@
     "keywords": [
       "sword"
     ]
+  },
+  {
+    "name": "wooden broom",
+    "description": "A broom for cleaning, typically used by the janitor.",
+    "weight": 4.0,
+    "value": 5,
+    "power": 5,
+    "keywords": [
+      "broom"
+    ]
   }
 ]

@@ -50,6 +50,7 @@ abstract class EntityBase(
     abstract val deadConversationalName: String
     abstract val finalCleanupName: String
     abstract val randomName: String
+
     // "..., a goblin (kneeling), ..."
     val nameForCollectionString
         get() = when {
@@ -99,8 +100,10 @@ abstract class EntityBase(
     val kneelString
         get() = Messages.get(Message.ENTITY_KNEELS, capitalizedPrefixedRandomName)
 
-    fun departString(connection: Connection) =
-        if (connection.direction != MovementDirection.NONE) {
+    fun departString(connection: Connection? = null) =
+        if (connection == null) {
+            Messages.get(Message.ENTITY_LEAVES_GAME, prefixedRandomName)
+        } else if (connection.direction != MovementDirection.NONE) {
             // The goblin heads east.
             // "$prefixedRandomName heads ${connection.direction.toString().lowercase()}."
             Messages.get(
@@ -247,7 +250,7 @@ abstract class EntityBase(
                 }
 
                 randomLivingHostile.attributes.currentHealth -= damage
-                if (randomLivingHostile.attributes.currentHealth <= 0) {
+                if (randomLivingHostile.isDead) {
                     appendLine(randomLivingHostile.deathString)
                 }
 
@@ -275,8 +278,8 @@ abstract class EntityBase(
                     }
 
                     if (deadHostile.inventory.isNotEmpty()) {
-                        currentRoom.addInventory(deadHostile.inventory)
                         appendLine(deadHostile.dropString(deadHostile.inventory))
+                        currentRoom.addInventory(deadHostile.inventory)
                     }
 
                     sendToAll(this)
@@ -395,7 +398,7 @@ abstract class EntityBase(
 
     fun doMumble() = sendToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
 
-    fun say(what: String) = sendToAll(Message.ENTITY_SAYS, prefixedRandomName, what)
+    fun say(what: String) = Messages.get(Message.ENTITY_SAYS, prefixedRandomName, what)
 
     fun sendToAll(sb: StringBuilder) = sendToAll(sb.trim('\n').toString())
     fun sendToAll(what: String) = currentRoom.sendToAll(what)
@@ -406,8 +409,11 @@ abstract class EntityBase(
     // region get items, weapons, armor
     private fun doGetValuableItem() {
         currentRoom.getAndRemoveRandomValuableItemOrNull()?.let { item ->
-            say(FlavorText.get(EntityAction.GET_VALUABLE_ITEM))
-            sendToAll(getString(item))
+            with(StringBuilder()) {
+                appendLine(say(FlavorText.get(EntityAction.GET_VALUABLE_ITEM)))
+                appendLine(getString(item))
+                sendToAll(this)
+            }
         }
     }
 
@@ -425,13 +431,11 @@ abstract class EntityBase(
                 weapon = foundWeapon
 
                 d100(10) {
-                    appendLine(FlavorText.get(EntityAction.GET_ANY_ITEM))
+                    appendLine(say(FlavorText.get(EntityAction.GET_ANY_ITEM)))
                 }
                 appendLine(equipString(foundWeapon))
                 sendToAll(this)
             }
-
-            sendToAll(equipString(foundWeapon))
         } ?: doNothing()
 
     private fun doFindAndEquipAnyArmor() {
@@ -462,38 +466,42 @@ abstract class EntityBase(
 
     private fun doGetRandomBetterWeapon() {
         Debug.println("EntityBase::doGetRandomBetterWeapon()")
-        currentRoom.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)?.let { newWeapon ->
-            with(StringBuilder()) {
-                weapon?.let { oldWeapon ->
-                    appendLine(dropString(oldWeapon))
-                    currentRoom.addItem(oldWeapon)
+        (inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)
+            ?: currentRoom.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0))
+            ?.let { newWeapon ->
+                with(StringBuilder()) {
+                    weapon?.let { oldWeapon ->
+                        appendLine(dropString(oldWeapon))
+                        currentRoom.addItem(oldWeapon)
+                    }
+
+                    weapon = newWeapon
+                    appendLine(getString(newWeapon))
+
+                    sendToAll(this)
                 }
-
-                weapon = newWeapon
-                appendLine(getString(newWeapon))
-
-                sendToAll(this)
-            }
-        } ?: {
+            } ?: {
             Debug.println("EntityBase::doGetRandomWeapon() - no weapon in current room")
             doNothing()
         }
     }
 
     private fun doGetRandomBetterArmor() {
-        currentRoom.getAndRemoveRandomBetterArmorOrNull((armor?.defense?.plus(1)) ?: 0)?.let { newArmor ->
-            with(StringBuilder()) {
-                armor?.let { oldArmor ->
-                    currentRoom.addItem(oldArmor)
-                    appendLine(dropString(oldArmor))
+        (inventory.getAndRemoveRandomBetterArmorOrNull(armor?.defense?.plus(1) ?: 0)
+            ?: currentRoom.getAndRemoveRandomBetterArmorOrNull((armor?.defense?.plus(1)) ?: 0))
+            ?.let { newArmor ->
+                with(StringBuilder()) {
+                    armor?.let { oldArmor ->
+                        currentRoom.addItem(oldArmor)
+                        appendLine(dropString(oldArmor))
+                    }
+
+                    armor = newArmor
+                    appendLine(getString(newArmor))
+
+                    sendToAll(this)
                 }
-
-                armor = newArmor
-                appendLine(getString(newArmor))
-
-                sendToAll(this)
-            }
-        } ?: doNothing()
+            } ?: doNothing()
 
         // Debug.println("EntityBase::doGetRandomArmor() - no armor in current room")
         // doNothing()
@@ -656,11 +664,9 @@ abstract class EntityBase(
 
     fun doMove(newRoom: Room, connection: Connection) {
         // Debug.println("EntityBase::doRandomMove() - $name - move from ${currentRoom.coordinates} to ${newRoom.coordinates}")
-        // leaving
+        // pass the connection as part of the move message
         currentRoom.removeEntity(this, connection)
-        // move
         currentRoom = newRoom
-        // arriving (addEntity handles announce)
         currentRoom.addEntity(this)
     }
     // endregion
@@ -733,11 +739,11 @@ abstract class EntityBase(
 
     // region init/cleanup
     fun doInit(initialRoom: Room) {
+        Debug.println("EntityBase::doInit() - adding $fullName to ${initialRoom.coordinates}")
+
         // set initial room and add self
         currentRoom = initialRoom
         currentRoom.addEntity(this)
-
-        Debug.println("EntityBase::doInit() - adding $fullName to ${currentRoom.coordinates}")
     }
 
     fun doFinalCleanup() {
@@ -746,3 +752,13 @@ abstract class EntityBase(
     }
     // endregion
 }
+
+// entity has a creature type (HUMANOID, SPIDER, etc.)
+// each creature type has a default behavior
+// e.g. spiders don't do the same things humanoids do
+// e.g. "raider" that favors loot gathering, which creature types can be raiders?
+// combo creature type with profession type
+// creature type has default behavior
+// profession type has default behavior
+// how to reconcile?
+// default humanoid is boring, profession can add flair (raider)

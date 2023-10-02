@@ -8,28 +8,31 @@ import engine.player.Player
 import engine.world.World
 
 object Debug {
-    private class Level
+    private enum class Level {
+        VERBOSE,
+    }
 
+    private val debugLevel = Level.VERBOSE
     private const val debugging = true
 
-    const val valuableItemMinimumValue = 200
+    const val valuableItemMinimumValue = 50
     const val maxNpcs = 10
-    const val maxMonsters = 5
-    const val maxJanitors = 0
+    const val maxMonsters = 10
+    const val maxJanitors = 4
     const val npcDelayMin = 2000
     const val npcDelayMax = 3000
     const val monsterDelayMin = 3000
     const val monsterDelayMax = 4000
-    const val monsterMaxLevel = 5
+    const val monsterMaxLevel = 2
     const val monsterAttackDebuff = 30
     const val npcAttackBuff = 0
-    private const val initialWeapons = 15
-    private const val initialArmor = 15
-    private const val initialJunk = 15
-    private const val initialExpensiveJunk = 15
-    private const val initialFood = 15
-    private const val initialDrink = 15
-    private const val initialContainer = 15
+    private const val initialWeapons = 5
+    private const val initialArmor = 5
+    private const val initialJunk = 5
+    private const val initialGems = 50
+    private const val initialFood = 5
+    private const val initialDrink = 5
+    private const val initialContainer = 5
 
     fun println(str: String) {
         if (debugging) {
@@ -39,15 +42,7 @@ object Debug {
 
     fun init() {
         addRandomItemsToRandomRooms()
-        addExpensiveJunk()
     }
-
-    private fun addExpensiveJunk() {
-        repeat(initialExpensiveJunk) {
-            ItemTemplates.junk[0].createItemAt(World.getRandomRoom())
-        }
-    }
-
     private fun addRandomItemsToRandomRooms() {
         repeat(initialWeapons) {
             ItemTemplates.weapons.random().createItemAt(World.getRandomRoom())
@@ -66,6 +61,9 @@ object Debug {
         }
         repeat(initialContainer) {
             ItemTemplates.containers.random().createItemAt(World.getRandomRoom())
+        }
+        repeat(initialGems) {
+            ItemTemplates.gems.random().createItemAt(World.getRandomRoom())
         }
     }
 

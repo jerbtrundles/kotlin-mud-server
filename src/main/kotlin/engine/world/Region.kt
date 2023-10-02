@@ -5,7 +5,7 @@ class Region(
     val name: String,
     val subregions: List<Subregion>
 ) {
-    override fun toString() = name
+    override fun toString() = "Region: $id - $name"
     val displayString = name
 
     fun toDebugString(): String {

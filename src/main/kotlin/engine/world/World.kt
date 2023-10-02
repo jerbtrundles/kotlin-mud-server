@@ -21,9 +21,10 @@ object World {
     val zero
         get() = regions[0].subregions[0].rooms[0]
 
-    fun getRoomFromCoordinates(coordinates: WorldCoordinates): Room {
-        return regions[coordinates.region].subregions[coordinates.subregion].rooms[coordinates.room]
-    }
+    fun getRoomFromCoordinates(coordinates: WorldCoordinates) =
+        regions[coordinates.region]
+            .subregions[coordinates.subregion]
+            .rooms[coordinates.room]
 
     val allRooms
         get() = regions.flatMap { region ->

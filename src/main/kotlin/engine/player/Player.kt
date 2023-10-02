@@ -75,7 +75,7 @@ class Player(
         val message = "ROOM:" + Messages.get(
             Message.LOOK_CURRENT_ROOM,
             region.displayString,
-            subregion.toString(),
+            subregion.displayString,
             room.roomString
         )
         sendToMe(message)
@@ -136,7 +136,7 @@ class Player(
         val subregion = region.subregions[coordinates.subregion]
         val room = subregion.rooms[coordinates.room]
 
-        sendToMe(Message.LOOK_CURRENT_ROOM, region.displayString, subregion.toString(), room.displayString)
+        sendToMe(Message.LOOK_CURRENT_ROOM, region.displayString, subregion.displayString, room.displayString)
 
         // refresh client entities list
         // called both when player says "look" and when player moves between rooms

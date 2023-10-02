@@ -6,7 +6,6 @@ import engine.utility.Common
 import engine.player.Player
 import engine.game.GameInput
 import engine.item.ItemBase
-import engine.item.ItemWeapon
 import engine.player.PlayerAction
 import java.util.UUID
 
@@ -154,10 +153,9 @@ open class Room(
         }.randomOrNull()
     fun removeEntity(entity: EntityBase, connection: Connection? = null) {
         entities.remove(entity)
-        connection?.let {
+        if(!entity.isDead) {
             sendToAll(entity.departString(connection))
         }
-
         sendEntitiesStringsToPlayers()
     }
     // endregion
@@ -220,8 +218,8 @@ open class Room(
         sendItemListToPlayer()
     }
 
-    fun addInventory(inventory: Inventory) {
-        inventory.addInventory(inventory)
+    fun addInventory(other: Inventory) {
+        inventory.addInventory(other)
         sendItemListToPlayer()
     }
     // endregion
