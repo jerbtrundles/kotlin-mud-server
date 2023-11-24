@@ -17,7 +17,7 @@ class EntityMonster(
     behavior: EntityBehavior = EntityBehavior.defaultMonster,
     weapon: ItemWeapon? = null,
     armor: ItemArmor? = null,
-    stringPrefix: String = "The ",
+    namePrefix: String = "The ",
     arriveStringSuffix: String = "has arrived",
     inventory: Inventory = Inventory.defaultMonster()
 ) : EntityBase(
@@ -29,14 +29,16 @@ class EntityMonster(
     behavior = behavior,
     weapon = weapon,
     armor = armor,
-    stringPrefix = stringPrefix,
+    namePrefix = namePrefix,
     experience = experience,
     gold = gold,
-    delayMin = Debug.monsterDelayMin,
-    delayMax = Debug.monsterDelayMax,
+    actionDelayMin = Debug.monsterDelayMin,
+    actionDelayMax = Debug.monsterDelayMax,
     arriveStringSuffix = arriveStringSuffix,
     inventory = inventory
 ) {
+    override val canTravelBetweenRegions = false
+
     override val nameWithJob
         get() = name
     override val fullName
@@ -55,4 +57,12 @@ class EntityMonster(
     override val nameForStory = "The $name"
     override fun calculateAttackPower() =
         attributes.strength + (weapon?.power ?: 0) - Debug.monsterAttackDebuff // debug monster attack debuff
+
+    override fun processDeath() {
+        GameStats.numMonstersKilled++
+        GameStats.sendStatsToPlayers()
+    }
+
+    // TODO: monsters can speak in different ways; specify in monster config
+    override fun say(what: String) = ""
 }

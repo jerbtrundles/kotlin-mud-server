@@ -11,10 +11,7 @@ object World {
         coordinates = WorldCoordinates(-1, -1, -1),
         description = "A cold, dark region of nothingness.",
         connections = listOf(
-            Connection(
-                coordinatesString = "0, 0, 0",
-                matchInputString = "go out"
-            )
+            Connection("0, 0, 0 - go out")
         )
     )
 

@@ -10,6 +10,7 @@ enum class EntityAction {
     GET_RANDOM_BETTER_ARMOR,
     GET_RANDOM_BETTER_WEAPON,
     GET_RANDOM_ITEM,
+    HEAL_OTHER,
     HEAL_SELF,
     LOOK,
     IDLE,

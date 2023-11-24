@@ -434,35 +434,35 @@ class Player(
     // region attack/search entities
     private fun doAttack(gameInput: GameInput) {
         currentRoom.randomLivingHostileOrNull(faction, gameInput.suffix)?.let { livingHostile ->
-            val toMe = StringBuilder()
-            val toOthers = StringBuilder()
+            val messageToMe = StringBuilder()
+            val messageToOthers = StringBuilder()
 
             val weaponString = weapon?.name ?: "fists"
             val attack = attributes.strength + (weapon?.power ?: 0)
             val defense = livingHostile.attributes.baseDefense
             val damage = (attack - defense).coerceAtLeast(0)
 
-            toMe.appendLine(Message.PLAYER_ATTACKS_ENTITY_WITH_WEAPON, livingHostile.name, weaponString)
+            messageToMe.appendLine(Message.PLAYER_ATTACKS_ENTITY_WITH_WEAPON, livingHostile.name, weaponString)
 
             if (damage > 0) {
-                toMe.appendLine(Message.PLAYER_HITS_FOR_DAMAGE, damage.toString())
-                toOthers.appendLine(Message.OTHER_PLAYER_HITS_FOR_DAMAGE, damage.toString())
+                messageToMe.appendLine(Message.PLAYER_HITS_FOR_DAMAGE, damage.toString())
+                messageToOthers.appendLine(Message.OTHER_PLAYER_HITS_FOR_DAMAGE, damage.toString())
             } else {
-                toMe.appendLine(Message.PLAYER_MISSES)
-                toOthers.appendLine(Message.OTHER_PLAYER_MISSES, name)
+                messageToMe.appendLine(Message.PLAYER_MISSES)
+                messageToOthers.appendLine(Message.OTHER_PLAYER_MISSES, name)
             }
 
             livingHostile.attributes.currentHealth -= damage
             if (livingHostile.attributes.currentHealth <= 0) {
-                toMe.appendLine(Message.ENTITY_DIES, livingHostile.name)
-                toOthers.appendLine(Message.ENTITY_DIES, livingHostile.name)
+                messageToMe.appendLine(Message.ENTITY_DIES, livingHostile.name)
+                messageToOthers.appendLine(Message.ENTITY_DIES, livingHostile.name)
 
                 experience += livingHostile.experience
-                toMe.appendLine(Message.PLAYER_GAINS_EXPERIENCE, livingHostile.experience.toString())
+                messageToMe.appendLine(Message.PLAYER_GAINS_EXPERIENCE, livingHostile.experience.toString())
             }
 
-            sendToMe(toMe)
-            sendToOthers(toOthers)
+            sendToMe(messageToMe)
+            sendToOthers(messageToOthers)
         } ?: doUnknown()
     }
 
@@ -489,7 +489,7 @@ class Player(
                 with(
                     Messages.get(
                         Message.ENTITY_DROPS_ITEM,
-                        deadHostile.prefixedName,
+                        deadHostile.prefixedFullName,
                         deadHostile.inventory.collectionString
                     )
                 ) {

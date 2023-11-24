@@ -4,23 +4,23 @@ import com.beust.klaxon.Json
 import engine.world.*
 
 class RoomTemplate(
-    @Json(name = "room-id")
-    val id: Int,
-    @Json(name = "room-coordinates")
+    @Json(name = "coordinates")
     val coordinatesString: String,
-    @Json(name = "room-description")
+    @Json(name = "description")
     val description: String,
-    @Json(name = "room-connections")
-    val connections: List<Connection>,
-    @Json(name = "room-is-shop")
+    @Json(name = "connections")
+    val connectionStrings: List<String>,
+    @Json(name = "is-shop")
     val isShop: String = "false",
-    @Json(name = "room-is-bank")
+    @Json(name = "is-bank")
     val isBank: String = "false"
 ) {
     @Json(ignored = true)
     val coordinates = WorldCoordinates.parseFromString(coordinatesString)
+    @Json(ignored = true)
+    val connections = connectionStrings.map { Connection(it) }
 
-    fun toRoom(): Room {
+    fun toRoom(id: Int): Room {
         return if (isShop == "true") {
             val shopTemplate = ShopTemplates.templates.firstOrNull { shopTemplate ->
                 shopTemplate.coordinates == coordinates

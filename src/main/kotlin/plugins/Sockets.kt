@@ -1,4 +1,4 @@
-package connection.plugins
+package plugins
 
 import connection.ConnectionManager
 import engine.player.Player

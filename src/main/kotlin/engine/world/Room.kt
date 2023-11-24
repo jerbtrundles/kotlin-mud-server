@@ -18,6 +18,9 @@ open class Room(
 ) {
     private val uuid = UUID.randomUUID()!!
     private val inventory = Inventory()
+
+    // npcs, monsters travel only within their current region
+    val connectionsInRegion by lazy { connections.filter { it.coordinates.region == coordinates.region } }
     val containsItem
         get() = inventory.isNotEmpty()
     val containsValuableItem
@@ -112,6 +115,7 @@ open class Room(
         sendToAll(npcsTextString)
         sendToAll(monstersTextString)
     }
+
     fun addPlayer(player: Player) {
         players.add(player)
         player.sendToMe(itemsTextString)
@@ -124,11 +128,13 @@ open class Room(
             sendToOthers(player, player.departString(connection))
         } ?: sendToOthers(player, Message.PLAYER_LEAVES_GAME, player.name)
     }
+
     fun firstHostileToPlayerOrNull(keyword: String) =
         entities.firstOrNull {
             it.isHostileTo(EntityFactions.PLAYER)
                     && it.matchesKeyword(keyword)
         }
+
     fun firstDeadAndUnsearchedHostileToPlayerOrNull(suffix: String) =
         entities.firstOrNull {
             it.matchesKeyword(suffix)
@@ -151,9 +157,10 @@ open class Room(
             it.faction.isHostileTo(faction)
                     && it.matchesKeyword(keyword)
         }.randomOrNull()
+
     fun removeEntity(entity: EntityBase, connection: Connection? = null) {
         entities.remove(entity)
-        if(!entity.isDead) {
+        if (!entity.isDead) {
             sendToAll(entity.departString(connection))
         }
         sendEntitiesStringsToPlayers()
@@ -178,6 +185,10 @@ open class Room(
 
     fun containsContainer() =
         inventory.containsContainer()
+
+    fun containsInjuredFriendly(friend: EntityBase) =
+        npcs.any { !it.isHostileTo(friend) }
+                || monsters.any { !it.isHostileTo(friend) }
     // endregion
 
     // region uuid -> equality, hash code
@@ -207,51 +218,51 @@ open class Room(
     // endregion
 
     // region add/remove item/inventory
-    private fun sendItemListToPlayer() = sendToAll(inventory.itemsTextString)
+    private fun sendItemListToPlayers() = sendToAll(inventory.itemsTextString)
     fun addItem(item: ItemBase) {
         inventory.addItem(item)
-        sendItemListToPlayer()
+        sendItemListToPlayers()
     }
 
     fun removeItem(item: ItemBase) {
         inventory.removeItem(item)
-        sendItemListToPlayer()
+        sendItemListToPlayers()
     }
 
     fun addInventory(other: Inventory) {
         inventory.addInventory(other)
-        sendItemListToPlayer()
+        sendItemListToPlayers()
     }
     // endregion
 
     // region items
     fun getAndRemoveRandomValuableItemOrNull() =
         inventory.getAndRemoveRandomValuableItem()?.let {
-            sendItemListToPlayer()
+            sendItemListToPlayers()
             it
         }
 
     fun getAndRemoveRandomWeaponOrNull() =
         inventory.getAndRemoveRandomWeaponOrNull()?.let {
-            sendItemListToPlayer()
+            sendItemListToPlayers()
             it
         }
 
     fun getAndRemoveRandomArmorOrNull() =
         inventory.getAndRemoveRandomArmorOrNull()?.let {
-            sendItemListToPlayer()
+            sendItemListToPlayers()
             it
         }
 
     fun getAndRemoveRandomBetterArmorOrNull(minRequiredDefense: Int) =
         inventory.getAndRemoveRandomBetterArmorOrNull(minRequiredDefense)?.let {
-            sendItemListToPlayer()
+            sendItemListToPlayers()
             it
         }
 
     fun getAndRemoveRandomItemOrNull() =
         inventory.getAndRemoveRandomItem()?.let {
-            sendItemListToPlayer()
+            sendItemListToPlayers()
             it
         }
 
@@ -261,7 +272,7 @@ open class Room(
     fun getRandomDrinkOrNull() = inventory.getRandomDrinkOrNull()
     fun getAndRemoveRandomBetterWeaponOrNull(minRequiredPower: Int) =
         inventory.getAndRemoveRandomBetterWeaponOrNull(minRequiredPower)?.let {
-            sendItemListToPlayer()
+            sendItemListToPlayers()
             it
         }
 
@@ -272,6 +283,10 @@ open class Room(
 
     fun matchingConnectionOrNull(gameInput: GameInput) =
         connections.firstOrNull { it.equals(gameInput) }
+
+    fun getRandomInjuredFriendlyOrNull(friend: EntityBase) =
+        npcs.firstOrNull { !it.isHostileTo(friend) }
+            ?: monsters.firstOrNull { !it.isHostileTo(friend) }
 }
 
 // find an item, item comes with fluff text, maybe a story

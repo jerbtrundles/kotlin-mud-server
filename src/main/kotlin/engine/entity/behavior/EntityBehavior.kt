@@ -31,6 +31,18 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             )
         )
 
+        val healer = EntityBehavior(
+            listOf(
+                EntityPreference.defaultPreferenceHealFriendly,
+                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+                EntityPreference.defaultPreferenceFoundValuableItem,
+                EntityPreference.defaultPreferenceSearchDeadHostile,
+                EntityPreference.defaultPreferenceAttackLivingHostile,
+                EntityPreference.defaultPreferenceFindBetterWeapon,
+                EntityPreference.defaultPreferenceFindBetterArmor
+            )
+        )
+
         val janitor = EntityBehavior(
             listOf(
                 EntityPreference.defaultPreferenceFindBetterWeapon,

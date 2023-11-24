@@ -27,6 +27,13 @@ class EntityPreference(
             ),
             EntityAction.FIND_AND_EQUIP_ANY_WEAPON
         )
+        val defaultPreferenceHealFriendly = EntityPreference(
+            listOf(
+                EntitySituation.INJURED_FRIENDLY_IN_ROOM,
+                EntitySituation.CAN_CAST_HEALING_SPELL
+            ),
+            EntityAction.HEAL_OTHER
+        )
         val defaultPreferenceSearchDeadHostile = EntityPreference(
             EntitySituation.ANY_UNSEARCHED_DEAD_HOSTILES, EntityAction.SEARCH_RANDOM_UNSEARCHED_DEAD_HOSTILE
         )

@@ -30,7 +30,7 @@ class EntityMonsterTemplate(
         ),
         inventory = Inventory.parseFromStringList(itemsString),
         keywords = this.keywords,
-        armor = ItemTemplates.armor.getOrNull(0)?.createItem(),
-        weapon = ItemTemplates.weapons.getOrNull(0)?.createItem()
+        armor = null, // ItemTemplates.armor.getOrNull(0)?.createItem(),
+        weapon = null, // ItemTemplates.weapons.getOrNull(0)?.createItem()
     )
 }

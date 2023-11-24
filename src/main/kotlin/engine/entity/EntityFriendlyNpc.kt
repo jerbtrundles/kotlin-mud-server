@@ -2,9 +2,12 @@ package engine.entity
 
 import debug.Debug
 import engine.Inventory
+import engine.Message
+import engine.Messages
 import engine.entity.behavior.EntityBehavior
 import engine.item.ItemArmor
 import engine.item.ItemWeapon
+import engine.magic.Spell
 
 class EntityFriendlyNpc(
     name: String,
@@ -19,7 +22,8 @@ class EntityFriendlyNpc(
     attributes: EntityAttributes = EntityAttributes.defaultNpc,
     inventory: Inventory = Inventory.defaultNpc(),
     weapon: ItemWeapon? = null,
-    armor: ItemArmor? = null
+    armor: ItemArmor? = null,
+    spells: MutableMap<String, Spell> = mutableMapOf()
 ) : EntityBase(
     faction = EntityFaction.factionNpc,
     name = name,
@@ -30,36 +34,45 @@ class EntityFriendlyNpc(
     experience = experience,
     gold = gold,
     behavior = behavior,
-    delayMin = delayMin,
-    delayMax = delayMax,
+    actionDelayMin = delayMin,
+    actionDelayMax = delayMax,
     arriveStringSuffix = arriveStringSuffix,
     inventory = inventory,
     weapon = weapon,
-    armor = armor
+    armor = armor,
+    spells = spells
 ) {
-    override val deadConversationalName
-        get() = "the spirit of $randomName"
-    override val nameWithJob
-        get() = "$name the $job"
-    override val fullName
-        get() = nameWithJob
+    override val canTravelBetweenRegions = true
+
+    // region names
+    override val nameWithJob = "$name the $job"
+    override val fullName = nameWithJob
+
+    // "$arriveName has arrived."
+    override val arriveName = fullName
+
+    // "The body of $finalCleanupName crumbles to dust."
+    override val finalCleanupName = nameWithJob
+
+    // "$stringPrefix$deathName dies."
+    override val deathName = nameWithJob
+
     override val randomName
         get() = arrayOf(nameWithJob, name).random()
 
     // "...says to $conversationalName, 'Hello!'"
     override val conversationalName
         get() = randomName
-
-    // "The body of $finalCleanupName crumbles to dust."
-    override val finalCleanupName get() = nameWithJob
-
-    // "$arriveName has arrived."
-    override val arriveName: String
-        get() = fullName
-
-    // "$stringPrefix$deathName dies."
-    override val deathName = nameWithJob
+    override val deadConversationalName
+        get() = "the spirit of $randomName"
+    // endregion
 
     override fun calculateAttackPower() =
         attributes.strength + (weapon?.power ?: 0) + Debug.npcAttackBuff
+    override fun processDeath() {
+        GameStats.numNpcsKilled++
+        GameStats.sendStatsToPlayers()
+    }
+
+    override fun say(what: String) = Messages.get(Message.ENTITY_SAYS, prefixedRandomName, what)
 }

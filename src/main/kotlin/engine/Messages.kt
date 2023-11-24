@@ -7,6 +7,8 @@ enum class Message {
     DEAD_ENTITY_QUIPS_SOLO,
     ENTITY_ARRIVES,
     ENTITY_ATTACKS_PLAYER,
+    ENTITY_CASTS_SPELL,
+    ENTITY_CASTS_SPELL_ON_ENTITY,
     ENTITY_DESTROYS_ITEM,
     ENTITY_DIES,
     ENTITY_DRINKS_DRINK_FROM_INVENTORY,
@@ -18,7 +20,9 @@ enum class Message {
     ENTITY_HEADS_DIRECTION,
     ENTITY_HEADS_OVER_TO_THE_CONNECTION,
     ENTITY_HEADS_THROUGH_THE_TOWN_GATES,
+    ENTITY_HEADS_DOWN_THE_DIRT_PATH,
     ENTITY_HITS_ENTITY_FOR_DAMAGE,
+    ENTITY_IS_HEALED,
     ENTITY_KNEELS,
     ENTITY_MISSES_ENTITY,
     ENTITY_MUMBLES,
@@ -29,6 +33,9 @@ enum class Message {
     ENTITY_SAYS_TO_ENTITY,
     ENTITY_SEARCHES_DEAD_ENTITY,
     ENTITY_SITS,
+    ENTITY_ATTACKS_ENTITY,
+    ENTITY_HITS_FOR_DAMAGE,
+    ENTITY_MISSES,
     ENTITY_SPEAKS_WITH_ENTITY,
     ENTITY_STANDS_UP,
     FOOD_OR_DRINK_LAST_OF_IT,
@@ -138,6 +145,7 @@ object Messages {
             Message.ENTITY_PUTS_AWAY_ITEM -> "%1 puts away their %2."
             Message.ENTITY_REMOVES_ITEM -> "%1 removes their %2."
             Message.ENTITY_SAYS -> "%1 says, \"%2\""
+            Message.ENTITY_ATTACKS_ENTITY -> "%1 swings at %2 with their %3."
             Message.ENTITY_SAYS_TO_ENTITY -> "%1 says to %2, \"%3\""
             Message.ENTITY_SEARCHES_DEAD_ENTITY -> "%1 searches the corpse of %2."
             Message.ENTITY_SITS -> "%1 sits down."
@@ -220,7 +228,12 @@ object Messages {
             Message.PLAYER_WITHDRAWS_GOLD -> "You withdraw %1 gold."
             Message.UNHANDLED_PLAYER_INPUT -> "I don't know, boss. Try something else."
             Message.ENTITY_LEAVES_GAME -> "%1 leaves."
-
+            Message.ENTITY_HITS_FOR_DAMAGE -> "They hit for %1 damage."
+            Message.ENTITY_MISSES -> "They miss."
+            Message.ENTITY_HEADS_DOWN_THE_DIRT_PATH -> "%1 heads down the dirt path."
+            Message.ENTITY_IS_HEALED -> "%1 regains %2 health."
+            Message.ENTITY_CASTS_SPELL_ON_ENTITY -> "%1 casts %2 on %3."
+            Message.ENTITY_CASTS_SPELL -> "%1 casts %2."
             else -> throw(Exception("error: invalid string"))
         }
 

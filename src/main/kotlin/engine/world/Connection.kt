@@ -5,11 +5,17 @@ import engine.game.GameInput
 import engine.game.MovementDirection
 
 open class Connection(
-    @Json(name = "connection-coordinates")
-    val coordinatesString: String,
-    @Json(name = "connection-input")
-    val matchInputString: String,
+    inputString: String
 ) {
+    companion object {
+        private const val separator = " - "
+    }
+
+    @Json(ignored = true)
+    val coordinatesString = inputString.substringBefore(separator)
+    @Json(ignored = true)
+    val matchInputString = inputString.substringAfter(separator)
+
     @Json(ignored = true)
     val coordinates = WorldCoordinates.parseFromString(coordinatesString)
     @Json(ignored = true)
