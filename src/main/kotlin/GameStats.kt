@@ -1,12 +1,20 @@
 import connection.ConnectionManager
-import engine.Messages
 
 object GameStats {
+    val monstersKilled = mutableMapOf<String, Int>()
     var numNpcsKilled = 0
-    var numMonstersKilled = 0
+    var totalMonstersKilled = 0
 
-    val statsString
-        get() = "STATS:NPCs killed: $numNpcsKilled\nMonsters killed: $numMonstersKilled"
+    val statsString: String
+        get() {
+            with(StringBuilder()) {
+                append("STATS:NPCs killed: $numNpcsKilled\nMonsters killed: $totalMonstersKilled\n")
+                monstersKilled.forEach { (name, count) ->
+                    appendLine("$name: $count")
+                }
+                return toString()
+            }
+        }
 
     fun sendStatsToPlayers() = ConnectionManager.sendToAll(statsString)
 }

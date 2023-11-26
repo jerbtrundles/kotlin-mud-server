@@ -12,9 +12,11 @@ class Inventory(
     val items: MutableList<ItemBase> = Collections.synchronizedList(mutableListOf())
 ) {
     companion object {
-        fun defaultMonster() = Inventory()
-        fun defaultNpc() = Inventory()
-        fun createWithRandomStuff(): Inventory {
+        fun defaultMonster() =
+            Inventory()
+        fun defaultNpc() =
+            Inventory()
+        fun createWithRandomStuff(): Inventory =
             with(Inventory()) {
                 repeat(5) {
                     randomChanceAddItemToList(ItemTemplates.junk)
@@ -26,12 +28,13 @@ class Inventory(
 
                 return this
             }
-        }
 
         fun parseFromStringList(itemStrings: List<String>) =
             if (itemStrings.isNotEmpty()) {
                 Inventory(
-                    items = Collections.synchronizedList(itemStrings.map { ItemTemplates.createItemFromString(it) }.toMutableList())
+                    items = Collections.synchronizedList(
+                        itemStrings.map { ItemTemplates.createItemFromString(it) }.toMutableList()
+                    )
                 )
             } else {
                 Inventory()
@@ -39,8 +42,10 @@ class Inventory(
     }
 
     // region empty checks
-    fun isEmpty() = items.isEmpty()
-    fun isNotEmpty() = items.isNotEmpty()
+    fun isEmpty() =
+        items.isEmpty()
+    fun isNotEmpty() =
+        items.isNotEmpty()
     // endregion
 
     // region strings
@@ -49,23 +54,26 @@ class Inventory(
 
     override fun toString() = collectionString
     val collectionString
-        get() = Common.collectionString(items.map { item -> item.name })
+        get() = Common.collectionString(items.map { it.name })
     // endregion
 
     // region add/remove
-    fun addInventory(other: Inventory) = items.addAll(other.items)
-    fun addItem(item: ItemBase) = items.add(item)
+    fun addInventory(other: Inventory) =
+        items.addAll(other.items)
+    fun addItem(item: ItemBase) =
+        items.add(item)
     private fun randomChanceAddItemToList(templates: List<ItemTemplate>, percentChance: Int = 20) =
         d100(percentChance) {
             templates.randomOrNull()?.let { items.add(it.createItem()) }
         }
 
-    fun removeItem(item: ItemBase) = items.remove(item)
+    fun removeItem(item: ItemBase) =
+        items.remove(item)
     // endregion
 
     // region contains item
     val containsValuableItem
-        get() = items.any { it.value > Debug.valuableItemMinimumValue }
+        get() = items.any { it.value >= Debug.valuableItemMinimumValue }
 
     fun containsWeapon() =
         items.any { it is ItemWeapon }
@@ -87,13 +95,21 @@ class Inventory(
     // endregion
 
     // region get best
-    fun getBestWeaponOrNull(minPower: Int = 0) = items.asSequence()
-        .filterIsInstance<ItemWeapon>()
-        .maxByOrNull { if (it.power > minPower) it.power else Int.MIN_VALUE }
+    fun getBestWeaponOrNull(minPower: Int = 0) =
+        items.asSequence()
+            .filterIsInstance<ItemWeapon>()
+            .maxByOrNull { if (it.power > minPower) it.power else Int.MIN_VALUE }
 
-    fun getBestArmorOrNull(minDefense: Int = 0) = items.asSequence()
-        .filterIsInstance<ItemArmor>()
-        .maxByOrNull { if (it.defense > minDefense) it.defense else Int.MIN_VALUE }
+    fun getBestArmorOrNull(minDefense: Int = 0) =
+        items.asSequence()
+            .filterIsInstance<ItemArmor>()
+            .maxByOrNull {
+                if (it.defense > minDefense) {
+                    it.defense
+                } else {
+                    Int.MIN_VALUE
+                }
+            }
     // endregion
 
     // region get random
@@ -114,13 +130,14 @@ class Inventory(
     fun getDrinkWithKeywordOrNull(keyword: String) =
         getTypedItemWithKeywordOrNull<ItemDrink>(keyword)
 
-    fun getItemWithKeywordOrNull(keyword: String) = items.firstOrNull { item ->
-        item.keywords.contains(keyword)
-    }
+    fun getItemWithKeywordOrNull(keyword: String) =
+        items.firstOrNull {
+            it.keywords.contains(keyword)
+        }
 
-    inline fun <reified T> getTypedItemWithKeywordOrNull(keyword: String) =
-        items.firstOrNull { item ->
-            item is T && item.keywords.contains(keyword)
+    private inline fun <reified T : ItemBase> getTypedItemWithKeywordOrNull(keyword: String) =
+        items.firstOrNull {
+            it is T && it.keywords.contains(keyword)
         } as? T
     // endregion
 
@@ -144,9 +161,9 @@ class Inventory(
         }
 
     fun getAndRemoveRandomItem(): ItemBase? =
-        items.randomOrNull()?.let { item ->
-            items.remove(item)
-            item
+        items.randomOrNull()?.let {
+            items.remove(it)
+            it
         }
 
     fun getAndRemoveRandomValuableItem() =
@@ -155,15 +172,21 @@ class Inventory(
             it
         }
 
-    inline fun <reified T> getRandomTypedItemOrNull() = items.filterIsInstance<T>().randomOrNull()
-    inline fun <reified T> getAndRemoveRandomTypedItemOrNull(): T? =
+    private inline fun <reified T : ItemBase> getRandomTypedItemOrNull() =
+        items.filterIsInstance<T>().randomOrNull()
+
+    private inline fun <reified T : ItemBase> getAndRemoveRandomTypedItemOrNull(): T? =
         getRandomTypedItemOrNull<T>()?.let {
-            items.remove(it as ItemBase)
+            items.remove(it)
             it
         }
 
-    fun getAndRemoveRandomWeaponOrNull() = getAndRemoveRandomTypedItemOrNull<ItemWeapon>()
-    fun getAndRemoveRandomArmorOrNull() = getAndRemoveRandomTypedItemOrNull<ItemArmor>()
+    fun getAndRemoveRandomWeaponOrNull() =
+        getAndRemoveRandomTypedItemOrNull<ItemWeapon>()
+
+    fun getAndRemoveRandomArmorOrNull() =
+        getAndRemoveRandomTypedItemOrNull<ItemArmor>()
+
     fun getAndRemoveRandomBetterWeaponOrNull(minRequiredPower: Int) =
         items.filterIsInstance(ItemWeapon::class.java)
             .filter { it.power >= minRequiredPower }
@@ -186,14 +209,10 @@ class Inventory(
             it
         }
 
-    fun getAndRemoveBestArmorOrNull(minDefense: Int = 0): ItemArmor? {
-        val bestArmor = items.asSequence()
-            .filterIsInstance<ItemArmor>()
-            .maxByOrNull { if (it.defense > minDefense) it.defense else Int.MIN_VALUE }
-
-        bestArmor?.let { items.remove(it) }
-
-        return bestArmor
-    }
+    fun getAndRemoveBestArmorOrNull(minDefense: Int = 0) =
+        getBestArmorOrNull(minDefense)?.let {
+            items.remove(it)
+            it
+        }
     // endregion
 }

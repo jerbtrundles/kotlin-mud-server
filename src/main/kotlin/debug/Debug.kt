@@ -6,6 +6,7 @@ import engine.entity.behavior.EntitySituation
 import engine.item.template.ItemTemplates
 import engine.player.Player
 import engine.world.World
+import kotlin.text.StringBuilder
 
 object Debug {
     private enum class Level {
@@ -16,14 +17,14 @@ object Debug {
     private const val debugging = true
 
     const val valuableItemMinimumValue = 50
-    const val npcDelayMin = 2000
-    const val npcDelayMax = 3000
-    const val monsterDelayMin = 3000
-    const val monsterDelayMax = 4000
-    const val monsterAttackDebuff = 30
+    const val npcDelayMin = 4000
+    const val npcDelayMax = 6000
+    const val monsterDelayMin = 6000
+    const val monsterDelayMax = 8000
+    const val monsterAttackDebuff = 0
     const val npcAttackBuff = 0
-    private const val initialWeapons = 5
-    private const val initialArmor = 5
+    private const val initialWeapons = 8
+    private const val initialArmor = 8
     private const val initialJunk = 0
     private const val initialGems = 0
     private const val initialFood = 0
@@ -32,9 +33,16 @@ object Debug {
 
     fun println(str: String) {
         if (debugging) {
-            kotlin.io.println("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t[$str]")
+            str.lines().forEachIndexed { i, line ->
+                if(i > 0) {
+                    print("\t\t")
+                }
+                kotlin.io.println("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
+            }
         }
     }
+
+    fun println(sb: StringBuilder) = println(sb.toString())
 
     fun init() {
         addRandomItemsToRandomRooms()

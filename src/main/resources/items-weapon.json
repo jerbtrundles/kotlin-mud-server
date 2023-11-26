@@ -38,5 +38,15 @@
     "keywords": [
       "broom"
     ]
+  },
+  {
+    "name": "wooden pitchfork",
+    "description": "A pitchfork, used here and there on the farm.",
+    "weight": 4.0,
+    "value": 5,
+    "power": 5,
+    "keywords": [
+      "pitchfork"
+    ]
   }
 ]

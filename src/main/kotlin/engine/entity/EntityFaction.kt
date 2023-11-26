@@ -1,11 +1,13 @@
 package engine.entity
 
 class EntityFaction(
-    val faction: EntityFactions,
+    val id: EntityFactions,
     val relationships: Map<EntityFactions, Int>
 ) {
+    fun isHostileTo(otherId: EntityFactions) =
+        relationships.getOrDefault(otherId, DEFAULT_FRIENDLY_RELATIONSHIP_VALUE) < 0
     fun isHostileTo(faction: EntityFaction) =
-        relationships.getOrDefault(faction.faction, DEFAULT_FRIENDLY_RELATIONSHIP_VALUE) < 0
+        relationships.getOrDefault(faction.id, DEFAULT_FRIENDLY_RELATIONSHIP_VALUE) < 0
 
     val myHostileFactions
         get() = EntityFactions.entries.filter {
@@ -14,17 +16,17 @@ class EntityFaction(
 
     companion object {
         val factionNpc = EntityFaction(
-            faction = EntityFactions.NPC,
+            id = EntityFactions.NPC,
             relationships = mapOf(EntityFactions.MONSTER to -100)
         )
 
         val factionMonster = EntityFaction(
-            faction = EntityFactions.MONSTER,
+            id = EntityFactions.MONSTER,
             relationships = mapOf(EntityFactions.NPC to -100)
         )
 
         val factionPlayer = EntityFaction(
-            faction = EntityFactions.PLAYER,
+            id = EntityFactions.PLAYER,
             relationships = mapOf(
                 EntityFactions.NPC to 100,
                 EntityFactions.MONSTER to -100

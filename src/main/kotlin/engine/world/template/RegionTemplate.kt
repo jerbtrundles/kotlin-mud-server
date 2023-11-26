@@ -20,7 +20,11 @@ class RegionTemplate(
     @Json(name = "max-npcs")
     val maxNpcs: Int = 0,
     @Json(name = "max-healers")
-    val maxHealers: Int = 0
+    val maxHealers: Int = 0,
+    @Json(name = "max-wizards")
+    val maxWizards: Int = 0,
+    @Json(name = "max-farmers")
+    val maxFarmers: Int = 0
 ) {
     val id = nextInt()
 
@@ -37,6 +41,8 @@ class RegionTemplate(
             maxMonsters = maxMonsters,
             maxJanitors = maxJanitors,
             maxNpcs = maxNpcs,
-            maxHealers = maxHealers
+            maxHealers = maxHealers,
+            maxWizards = maxWizards,
+            maxFarmers = maxFarmers
         )
 }

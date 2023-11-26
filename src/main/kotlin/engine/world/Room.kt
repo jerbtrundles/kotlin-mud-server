@@ -2,6 +2,7 @@ package engine.world
 
 import engine.*
 import engine.entity.*
+import engine.entity.behavior.EntitySituation
 import engine.utility.Common
 import engine.player.Player
 import engine.game.GameInput
@@ -28,9 +29,9 @@ open class Room(
 
     // region entities
     val monsters
-        get() = entities.filter { it.faction.faction == EntityFactions.MONSTER }
+        get() = entities.filter { it.faction.id == EntityFactions.MONSTER }
     val npcs
-        get() = entities.filter { it.faction.faction == EntityFactions.NPC }
+        get() = entities.filter { it.faction.id == EntityFactions.NPC }
     var players = mutableListOf<Player>()
     val hasNoEntities
         get() = entities.isEmpty() && players.isEmpty()
@@ -47,22 +48,26 @@ open class Room(
     // endregion
 
     // region strings
-    private val directionalExitsString = "Obvious exits: " +
-            connections.filter { connection ->
-                connection.matchInput.action == PlayerAction.MOVE
-            }.joinToString { connection ->
-                connection.matchInput.suffix
-            }
+    private val directionalExitsString =
+        "Obvious exits: " +
+                connections.filter { connection ->
+                    connection.matchInput.action == PlayerAction.MOVE
+                }.joinToString { connection ->
+                    connection.matchInput.suffix
+                }
 
     private val npcsString: String
-        get() = if (npcs.isEmpty()) {
-            ""
-        } else {
-            "You also see " +
-                    Common.collectionString(
-                        itemStrings = npcs.map { npc -> npc.nameForCollectionString },
-                        includeIndefiniteArticles = false
-                    ) + ".\n"
+        get() = with(StringBuilder()) {
+            if (npcs.isNotEmpty()) {
+                appendLine(
+                    "You also see " +
+                            Common.collectionString(
+                                itemStrings = npcs.map { npc -> npc.nameForCollectionString },
+                                includeIndefiniteArticles = false
+                            ) + "."
+                )
+            }
+            return toString()
         }
 
     private val monstersString: String
@@ -187,8 +192,8 @@ open class Room(
         inventory.containsContainer()
 
     fun containsInjuredFriendly(friend: EntityBase) =
-        npcs.any { !it.isHostileTo(friend) }
-                || monsters.any { !it.isHostileTo(friend) }
+        npcs.any { !it.isHostileTo(friend) && it.isInjuredMinor() }
+                || monsters.any { !it.isHostileTo(friend) && it.isInjuredMinor() }
     // endregion
 
     // region uuid -> equality, hash code
@@ -285,8 +290,8 @@ open class Room(
         connections.firstOrNull { it.equals(gameInput) }
 
     fun getRandomInjuredFriendlyOrNull(friend: EntityBase) =
-        npcs.firstOrNull { !it.isHostileTo(friend) }
-            ?: monsters.firstOrNull { !it.isHostileTo(friend) }
+        npcs.firstOrNull { !it.isHostileTo(friend) && it.isInSituation(EntitySituation.INJURED_MINOR) }
+            ?: monsters.firstOrNull { !it.isHostileTo(friend) && it.isInSituation(EntitySituation.INJURED_MINOR) }
 }
 
 // find an item, item comes with fluff text, maybe a story

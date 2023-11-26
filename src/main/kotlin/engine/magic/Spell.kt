@@ -15,8 +15,21 @@ class Spell(
                     strength = 5
                 )
             ),
-            cost = 5
+            cost = 2
             // "prefixedName's health is slightly restored."
+        )
+
+        val spellMinorFire = Spell(
+            name = "minor fire",
+            effects = listOf(
+                SpellEffect(
+                    type = SpellEffectType.FIRE_DAMAGE,
+                    target = SpellTarget.TARGET,
+                    strength = 5
+                )
+            ),
+            cost = 2
+            // "A ball of flame hurtles toward prefixedName, dealing x damage."
         )
     }
 

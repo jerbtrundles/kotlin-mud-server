@@ -9,6 +9,7 @@ enum class Message {
     ENTITY_ATTACKS_PLAYER,
     ENTITY_CASTS_SPELL,
     ENTITY_CASTS_SPELL_ON_ENTITY,
+    ENTITY_CASTS_SPELL_ON_SELF,
     ENTITY_DESTROYS_ITEM,
     ENTITY_DIES,
     ENTITY_DRINKS_DRINK_FROM_INVENTORY,
@@ -116,7 +117,8 @@ enum class Message {
     PLAYER_STANDS_UP,
     PLAYER_WITHDRAWS_GOLD,
     UNHANDLED_PLAYER_INPUT,
-    ENTITY_LEAVES_GAME
+    ENTITY_LEAVES_GAME,
+    FIREBALL_HURTLES_AT_ENTITY
 }
 
 object Messages {
@@ -234,6 +236,9 @@ object Messages {
             Message.ENTITY_IS_HEALED -> "%1 regains %2 health."
             Message.ENTITY_CASTS_SPELL_ON_ENTITY -> "%1 casts %2 on %3."
             Message.ENTITY_CASTS_SPELL -> "%1 casts %2."
+            Message.ENTITY_CASTS_SPELL_ON_SELF -> "%1 casts %2 on themselves."
+            Message.FIREBALL_HURTLES_AT_ENTITY -> "A ball of flame hurtles toward %1, dealing %2 damage."
+
             else -> throw(Exception("error: invalid string"))
         }
 

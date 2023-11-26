@@ -1,6 +1,6 @@
 package engine.world
 
-import java.lang.StringBuilder
+import kotlin.text.StringBuilder
 
 class Subregion(
     val id: Int,

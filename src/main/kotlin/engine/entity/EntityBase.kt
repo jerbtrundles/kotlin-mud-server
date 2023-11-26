@@ -37,13 +37,13 @@ abstract class EntityBase(
     val namePrefix: String = "",
     val job: String = "",
     val arriveStringSuffix: String = "walks in",
-    val unequippedWeaponString: String = "fists",
+    private val unequippedWeaponString: String = "fists",
     val spells: MutableMap<String, Spell> = mutableMapOf()
 ) {
     abstract val canTravelBetweenRegions: Boolean
 
-    var currentRoom: Room = World.void
-    protected var posture: EntityPosture = EntityPosture.STANDING
+    private var currentRoom: Room = World.void
+    private var posture: EntityPosture = EntityPosture.STANDING
     var hasNotBeenSearched = true
     val isDead get() = attributes.currentHealth <= 0
     val isAlive get() = !isDead
@@ -66,7 +66,7 @@ abstract class EntityBase(
             posture == EntityPosture.SITTING -> "$fullName (sitting)"
             else -> fullName
         }
-    open val nameForStory = fullName
+    abstract val nameForStory: String
     val prefixedFullName
         get() = "$namePrefix$fullName"
     val capitalizedPrefixedFullName
@@ -82,6 +82,10 @@ abstract class EntityBase(
     val capitalizedPrefixedDeathName
         get() = "$namePrefix$deathName"
     // endregion
+
+    fun isInjuredMinor() = attributes.isInjuredMinor()
+    fun isInjuredModerate() = attributes.isInjuredModerate()
+    fun isInjuredMajor() = attributes.isInjuredMajor()
 
     // region strings
     fun getString(item: ItemBase) =
@@ -156,6 +160,30 @@ abstract class EntityBase(
         doFinalCleanup()
     }
 
+    suspend fun beHealed() {
+        while (isAlive && Game.running) {
+            if (attributes.currentHealth < attributes.maximumHealth) {
+                val old = "${attributes.currentHealth}/${attributes.maximumHealth}"
+                val new = "${attributes.currentHealth + 1}/${attributes.maximumHealth}"
+                Debug.println("Healing $name: $old -> $new")
+            }
+            attributes.currentHealth++
+            doDelay()
+        }
+    }
+
+    suspend fun beMagicallyHealed() {
+        while (isAlive && Game.running) {
+            if (attributes.currentMagic < attributes.maximumMagic) {
+                val old = "${attributes.currentMagic}/${attributes.maximumMagic}"
+                val new = "${attributes.currentMagic + 1}/${attributes.maximumMagic}"
+                Debug.println("Healing (magic) $name: $old -> $new")
+            }
+            attributes.currentMagic++
+            doDelay()
+        }
+    }
+
     protected fun doAction() =
         if (isDead) {
             doIsDead()
@@ -196,13 +224,13 @@ abstract class EntityBase(
         get() = hostilesInCurrentRoom.filter { it.isDead && it.hasNotBeenSearched }
     val allHostilesCount
         get() = hostilesInCurrentRoom.size
-    val livingHostilesCount
+    val livingHostilesCount: Int
         get() = livingHostilesInCurrentRoom.size
     val deadAndUnsearchedHostilesCount
         get() = deadAndUnsearchedHostilesInCurrentRoom.size
 
     fun isHostileTo(otherEntity: EntityBase) = faction.isHostileTo(otherEntity.faction)
-    fun isHostileTo(otherFaction: EntityFactions) = faction.isHostileTo(faction)
+    fun isHostileTo(otherId: EntityFactions) = faction.isHostileTo(otherId)
 
     fun doAttackPlayer() =
         if (posture != EntityPosture.STANDING) {
@@ -570,7 +598,7 @@ abstract class EntityBase(
         }
     }
 
-    protected fun doStand() {
+    private fun doStand() {
         if (posture != EntityPosture.STANDING) {
             posture = EntityPosture.STANDING
             sendToAll(standString)
@@ -586,9 +614,9 @@ abstract class EntityBase(
     // endregion
 
     // region non-hostile actions
-    protected fun doNothing() {}
-    fun doIsDead() {}
-    fun doAction(action: EntityAction) {
+    private fun doNothing() {}
+    private fun doIsDead() {}
+    private fun doAction(action: EntityAction) {
         when (action) {
             EntityAction.MOVE -> doRandomMove()
             EntityAction.SIT -> doSit()
@@ -613,60 +641,107 @@ abstract class EntityBase(
             EntityAction.EAT_RANDOM_FOOD -> doEatRandomFoodItem()
             EntityAction.DRINK_RANDOM_DRINK -> doDrinkRandomDrinkItem()
             EntityAction.HEAL_OTHER -> doHealOther()
+            EntityAction.CAST_FIRE_AT_LIVING_HOSTILE -> doCastFireAtLivingHostile()
             else -> doNothing()
         }
     }
 
-    fun doHealOther() = currentRoom.getRandomInjuredFriendlyOrNull(friend = this)?.let { randomInjuredFriendly ->
-        doCastSpell(
-            spell = spells[Spell.spellMinorCure.name]!!,
-            target = randomInjuredFriendly
-        )
+    private fun doCastFireAtLivingHostile() {
+        currentRoom.randomLivingHostileOrNull(faction)?.let { randomLivingHostile ->
+            doCastSpell(
+                spell = spells[Spell.spellMinorFire.name]!!,
+                target = randomLivingHostile
+            )
+        } // TODO: can this be null?
     }
 
+    private fun doHealOther() =
+        currentRoom.getRandomInjuredFriendlyOrNull(friend = this)?.let { randomInjuredFriendly ->
+            doCastSpell(
+                spell = spells[Spell.spellMinorCure.name]!!,
+                target = randomInjuredFriendly
+            )
+        } // TODO: can this be null?
 
-    fun doCastSpell(spell: Spell, target: EntityBase? = null) =
-    // cast spell
+
+    private fun doCastSpell(spell: Spell, target: EntityBase? = null) =
     // messaging: spell effect
     // remove mp from caster
-    // add health to target
-        // TODO: processEffect(caster, target, effect)
+        // add health to target
+
         with(StringBuilder()) {
+            Debug.println(
+                "Casting ${spell.name}, " +
+                        "cost: ${spell.cost}, " +
+                        "target: ${target?.name ?: "(none)"}"
+            )
+
             appendLine(
                 target?.let {
-                    Messages.get(
-                        // messaging: x casts spell name on y
-                        Message.ENTITY_CASTS_SPELL_ON_ENTITY,
-                        capitalizedPrefixedRandomName,
-                        spell.name,
-                        target.prefixedRandomName
-                    )
+                    if (this@EntityBase == it) {
+                        // targeting self
+                        Messages.get(
+                            // x casts spell on themselves
+                            Message.ENTITY_CASTS_SPELL_ON_SELF,
+                            capitalizedPrefixedRandomName,
+                            spell.name
+                        )
+                    } else {
+                        Messages.get(
+                            // messaging: x casts spell on y
+                            Message.ENTITY_CASTS_SPELL_ON_ENTITY,
+                            capitalizedPrefixedRandomName,
+                            spell.name,
+                            target.prefixedRandomName
+                        )
+                    }
                 } ?: Messages.get(
-                    // TODO: is this good enough?
-                    //  what about casting on self?
-                    //  should spells affect a room and/or multiple entities?
+                    // TODO: no spells to test this on yet;
+                    //  is this good enough?
+                    //  what about when spells affect a room and/or multiple entities?
                     Message.ENTITY_CASTS_SPELL, capitalizedPrefixedRandomName, spell.name
                 )
             )
 
-            spell.effects.forEach { processEffect(it, target, this) }
+            attributes.currentMagic -= spell.cost
+            Debug.println(attributes.magicString)
+
+            spell.effects.forEach { processSpellEffect(it, target, this) }
+
+            if (target != null && target.isDead) {
+                appendLine(target.deathString)
+                target.processDeath()
+            }
+
+            Debug.println(this)
+            sendToAll(this)
         }
 
-    fun processEffect(effect: SpellEffect, target: EntityBase?, sb: StringBuilder) {
+    private fun processSpellEffect(effect: SpellEffect, target: EntityBase?, sb: StringBuilder) {
         // TODO: consider self-casts, multi-casts, etc.
         //  consider whether target is best left as EntityBase?
         when (effect.type) {
             SpellEffectType.RESTORE_HEALTH -> processRestoreHealth(effect, target!!, sb)
+            SpellEffectType.FIRE_DAMAGE -> processFireDamage(effect, target!!, sb)
         }
     }
 
-    fun processRestoreHealth(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
+    private fun processRestoreHealth(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
         // <target> is healed for <effect.strength>
+        Debug.println("Healing ${target.fullName} from ${target.attributes.currentHealth}")
         target.attributes.currentHealth += effect.strength
+        Debug.println("Target health is now ${target.attributes.currentHealth}")
         sb.appendLine(Message.ENTITY_IS_HEALED, target.prefixedRandomName, effect.strength.toString())
     }
 
-    fun doEatRandomFoodItem() =
+    private fun processFireDamage(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
+        Debug.println("Hurling a fireball at ${target.fullName}.")
+        target.attributes.currentHealth -= effect.strength
+        Debug.println("Target health is now ${target.attributes.currentHealth}")
+        sb.appendLine(Message.FIREBALL_HURTLES_AT_ENTITY, target.prefixedRandomName, effect.strength.toString())
+    }
+
+    private fun doEatRandomFoodItem() =
         inventory.getRandomFoodOrNull()?.let { foodFromInventory ->
             with(StringBuilder()) {
                 appendLine(
@@ -697,7 +772,7 @@ abstract class EntityBase(
             }
         } ?: doNothing()
 
-    fun doDrinkRandomDrinkItem() =
+    private fun doDrinkRandomDrinkItem() =
         inventory.getRandomDrinkOrNull()?.let { drinkFromInventory ->
             with(StringBuilder()) {
                 appendLine(
@@ -753,7 +828,7 @@ abstract class EntityBase(
             doMove(newRoom, connection)
         }
 
-    fun doMove(newRoom: Room, connection: Connection) {
+    private fun doMove(newRoom: Room, connection: Connection) {
         // Debug.println("EntityBase::doRandomMove() - $name - move from ${currentRoom.coordinates} to ${newRoom.coordinates}")
         // pass the connection as part of the move message
         currentRoom.removeEntity(this, connection)
@@ -767,9 +842,9 @@ abstract class EntityBase(
         when (situation) {
             EntitySituation.ANY -> true
 
-            EntitySituation.INJURED_MINOR -> attributes.isInjuredMinor()
-            EntitySituation.INJURED_MODERATE -> attributes.isInjuredModerate()
-            EntitySituation.INJURED_MAJOR -> attributes.isInjuredMajor()
+            EntitySituation.INJURED_MINOR -> isInjuredMinor()
+            EntitySituation.INJURED_MODERATE -> isInjuredModerate()
+            EntitySituation.INJURED_MAJOR -> isInjuredMajor()
 
             EntitySituation.SITTING -> posture == EntityPosture.SITTING
             EntitySituation.NOT_SITTING -> posture != EntityPosture.SITTING
@@ -826,16 +901,17 @@ abstract class EntityBase(
             EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_CONTAINER -> inventory.containsContainer() || currentRoom.containsContainer()
 
             EntitySituation.INJURED_FRIENDLY_IN_ROOM -> currentRoom.containsInjuredFriendly(friend = this)
-            EntitySituation.CAN_CAST_HEALING_SPELL -> canCastHealingSpell()
+            EntitySituation.CAN_CAST_HEALING_SPELL -> canCastSpellWithEffectType(SpellEffectType.RESTORE_HEALTH)
+            EntitySituation.CAN_CAST_FIRE_SPELL -> canCastSpellWithEffectType(SpellEffectType.FIRE_DAMAGE)
 
             else -> false
         }
 
-    fun isAlone() = currentRoom.entities.size == 1
+    private fun isAlone() = currentRoom.entities.size == 1
     // endregion
 
     // region init/cleanup
-    fun doInit(initialRoom: Room) {
+    private fun doInit(initialRoom: Room) {
         Debug.println("EntityBase::doInit() - adding $fullName to ${initialRoom.coordinates}")
 
         // set initial room and add self
@@ -843,26 +919,23 @@ abstract class EntityBase(
         currentRoom.addEntity(this)
     }
 
-    fun doFinalCleanup() {
+    private fun doFinalCleanup() {
         sendToAll(Message.DEAD_ENTITY_DECAYS, finalCleanupName)
         currentRoom.removeEntity(this)
     }
 
-    fun canCastHealingSpell(): Boolean {
-        Debug.println("entity magic: ${attributes.currentMagic}/${attributes.maximumMagic}")
-
-        val spell = spells.values.firstOrNull {
-            it.hasEffectType(SpellEffectType.RESTORE_HEALTH)
-                    && hasEnoughMagicToCast(it)
+    private fun canCastSpellWithEffectType(effectType: SpellEffectType): Boolean {
+        val canICastThis = spells.values.any {
+            it.hasEffectType(effectType) && hasEnoughMagicToCast(it)
         }
 
-        return spell?.let {
-            Debug.println("spell found: ${it.name}")
-            true
-        } ?: false
+        Debug.println("Do I have $effectType: $canICastThis")
+        return canICastThis
     }
 
-    fun hasEnoughMagicToCast(spell: Spell) = attributes.currentMagic >= spell.cost
+
+    private fun hasEnoughMagicToCast(spell: Spell) =
+        attributes.currentMagic >= spell.cost
 // endregion
 }
 

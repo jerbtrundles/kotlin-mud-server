@@ -34,6 +34,13 @@ class EntityPreference(
             ),
             EntityAction.HEAL_OTHER
         )
+        val defaultPreferenceCastFireAtLivingHostile = EntityPreference(
+            listOf(
+                EntitySituation.ANY_LIVING_HOSTILES,
+                EntitySituation.CAN_CAST_FIRE_SPELL
+            ),
+            EntityAction.CAST_FIRE_AT_LIVING_HOSTILE
+        )
         val defaultPreferenceSearchDeadHostile = EntityPreference(
             EntitySituation.ANY_UNSEARCHED_DEAD_HOSTILES, EntityAction.SEARCH_RANDOM_UNSEARCHED_DEAD_HOSTILE
         )
@@ -46,7 +53,7 @@ class EntityPreference(
         val defaultPreferenceFindBetterArmor = EntityPreference(
             EntitySituation.FOUND_BETTER_ARMOR, EntityAction.GET_RANDOM_BETTER_ARMOR
         )
-        val defaultPreferenceFoundValuableItem = EntityPreference(
+        val defaultPreferenceFindValuableItem = EntityPreference(
             EntitySituation.FOUND_VALUABLE_ITEM, EntityAction.GET_VALUABLE_ITEM
         )
         val defaultPreferenceEatFood = EntityPreference(
@@ -64,8 +71,6 @@ class EntityPreference(
         val janitorPreferenceDestroyItemInRoom = EntityPreference(
             EntitySituation.FOUND_ANY_ITEM, EntityAction.DESTROY_ANY_ITEM
         )
-        // endregion
-
         // region berserker
         val berserkerPreferenceAlwaysMoving = EntityPreference(
             EntitySituation.ANY, EntityAction.MOVE

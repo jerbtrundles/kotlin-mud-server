@@ -11,7 +11,9 @@ class Region(
     maxMonsters: Int,
     maxNpcs: Int,
     maxJanitors: Int,
-    maxHealers: Int
+    maxHealers: Int,
+    maxWizards: Int,
+    maxFarmers: Int
 ) {
     val entityManager = EntityManager(
         region = this,
@@ -19,6 +21,8 @@ class Region(
         maxNpcs = maxNpcs,
         maxJanitors = maxJanitors,
         maxHealers = maxHealers,
+        maxWizards = maxWizards,
+        maxFarmers = maxFarmers,
         monsterTemplates = monsterTemplates
     )
 

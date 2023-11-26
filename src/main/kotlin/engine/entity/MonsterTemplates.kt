@@ -8,7 +8,7 @@ object MonsterTemplates {
 
     fun load(c: Class<() -> Unit>) {
         Debug.println("Loading monsters...")
-        monsterTemplates = Common.parseArrayFromJson<EntityMonsterTemplate>(c, "/entities.json")
+        monsterTemplates = Common.parseArrayFromJson<EntityMonsterTemplate>(c, "/monsters.json")
         Debug.println("Done loading monsters. ${monsterTemplates.size} types of enemies are out to get us!")
     }
 

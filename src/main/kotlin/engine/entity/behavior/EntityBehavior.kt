@@ -9,7 +9,7 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             listOf(
                 // EntityPreference.defaultPreferenceQuipLikeABoss,
                 EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
-                EntityPreference.defaultPreferenceFoundValuableItem,
+                EntityPreference.defaultPreferenceFindValuableItem,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
                 EntityPreference.defaultPreferenceAttackLivingHostile,
                 EntityPreference.defaultPreferenceFindBetterWeapon,
@@ -35,7 +35,7 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             listOf(
                 EntityPreference.defaultPreferenceHealFriendly,
                 EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
-                EntityPreference.defaultPreferenceFoundValuableItem,
+                EntityPreference.defaultPreferenceFindValuableItem,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
                 EntityPreference.defaultPreferenceAttackLivingHostile,
                 EntityPreference.defaultPreferenceFindBetterWeapon,
@@ -43,12 +43,31 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             )
         )
 
+        val wizard = EntityBehavior(
+            listOf(
+//                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+//                EntityPreference.defaultPreferenceFindValuableItem,
+                EntityPreference.defaultPreferenceCastFireAtLivingHostile,
+                EntityPreference.defaultPreferenceSearchDeadHostile,
+//                EntityPreference.defaultPreferenceAttackLivingHostile,
+//                EntityPreference.defaultPreferenceFindBetterWeapon,
+//                EntityPreference.defaultPreferenceFindBetterArmor
+            )
+        )
+
         val janitor = EntityBehavior(
             listOf(
                 EntityPreference.defaultPreferenceFindBetterWeapon,
                 EntityPreference.defaultPreferenceFindBetterArmor,
-                EntityPreference.defaultPreferenceFoundValuableItem,
+                EntityPreference.defaultPreferenceFindValuableItem,
                 EntityPreference.janitorPreferenceDestroyItemInRoom,
+                EntityPreference.defaultPreferenceSearchDeadHostile
+            )
+        )
+
+        val farmer = EntityBehavior(
+            listOf(
+                EntityPreference.defaultPreferenceAttackLivingHostile,
                 EntityPreference.defaultPreferenceSearchDeadHostile
             )
         )
@@ -77,8 +96,13 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
         }
     }
 
-    fun getNextAction(entity: EntityBase) =
-        preferences.firstOrNull { preference ->
+    fun getNextAction(entity: EntityBase): EntityAction {
+        val action = preferences.firstOrNull { preference ->
             preference.situations.all { situation -> entity.isInSituation(situation) }
         }?.action ?: EntityAction.IDLE
+
+
+
+        return action
+    }
 }

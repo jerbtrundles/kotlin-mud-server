@@ -1,5 +1,6 @@
 package engine.entity
 
+import GameStats
 import debug.Debug
 import engine.Inventory
 import engine.entity.behavior.EntityBehavior
@@ -53,13 +54,14 @@ class EntityMonster(
     override val conversationalName
         get() = "the $name"
 
-
     override val nameForStory = "The $name"
     override fun calculateAttackPower() =
         attributes.strength + (weapon?.power ?: 0) - Debug.monsterAttackDebuff // debug monster attack debuff
 
     override fun processDeath() {
-        GameStats.numMonstersKilled++
+        val old = GameStats.monstersKilled[name] ?: 0
+        GameStats.monstersKilled[name] = old + 1
+        GameStats.totalMonstersKilled++
         GameStats.sendStatsToPlayers()
     }
 

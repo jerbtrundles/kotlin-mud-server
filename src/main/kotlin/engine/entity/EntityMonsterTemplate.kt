@@ -5,14 +5,20 @@ import engine.Inventory
 import engine.item.template.ItemTemplates
 
 class EntityMonsterTemplate(
+    @Json(name = "name")
     val name: String,
-    val level: Int,
-    val attributes: EntityAttributes,
+    @Json(name = "keywords")
     val keywords: List<String>,
-    val experience: Int,
-    val gold: Int,
+    @Json(name = "level")
+    val level: Int = 1,
+    @Json(name = "attributes")
+    val attributes: EntityAttributes = EntityAttributes.defaultCritter,
+    @Json(name = "experience")
+    val experience: Int = 0,
+    @Json(name = "gold")
+    val gold: Int = 0,
     @Json(name = "items")
-    val itemsString: List<String> = listOf()
+    val itemsString: List<String> = emptyList()
 ) {
     fun create() = EntityMonster(
         level = this.level,

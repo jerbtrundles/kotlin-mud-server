@@ -1,6 +1,7 @@
 package engine.entity
 
 import com.beust.klaxon.Json
+import kotlin.math.max
 
 class EntityAttributes(
     var strength: Int = 20,
@@ -11,13 +12,31 @@ class EntityAttributes(
     var baseDefense: Int = 20,
     @Json(name = "health")
     var maximumHealth: Int = 20,
-    @Json(ignored = true)
-    var currentHealth: Int = maximumHealth,
     @Json(name = "magic")
     var maximumMagic: Int = 20,
-    @Json(ignored = true)
-    var currentMagic: Int = maximumMagic,
 ) {
+    var currentHealth = max(maximumHealth - 3, 1)
+        set(value) {
+            field = if (value > maximumHealth) {
+                maximumHealth
+            } else if (value < 0) {
+                0
+            } else {
+                value
+            }
+        }
+
+    var currentMagic = max(maximumMagic - 3, 0)
+        set(value) {
+            field = if (value > maximumMagic) {
+                maximumMagic
+            } else if (value < 0) {
+                0
+            } else {
+                value
+            }
+        }
+
     val healthString
         get() = "Health: $currentHealth/$maximumHealth"
     val magicString
@@ -58,5 +77,8 @@ class EntityAttributes(
                 maximumHealth = 200,
                 maximumMagic = 0
             )
+
+        val defaultCritter
+            get() = EntityAttributes(1, 1, 1, 1, 1, 1, 1)
     }
 }

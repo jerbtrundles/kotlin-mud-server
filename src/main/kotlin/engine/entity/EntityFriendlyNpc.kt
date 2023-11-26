@@ -23,7 +23,8 @@ class EntityFriendlyNpc(
     inventory: Inventory = Inventory.defaultNpc(),
     weapon: ItemWeapon? = null,
     armor: ItemArmor? = null,
-    spells: MutableMap<String, Spell> = mutableMapOf()
+    spells: MutableMap<String, Spell> = mutableMapOf(),
+    override val canTravelBetweenRegions: Boolean = true
 ) : EntityBase(
     faction = EntityFaction.factionNpc,
     name = name,
@@ -42,18 +43,14 @@ class EntityFriendlyNpc(
     armor = armor,
     spells = spells
 ) {
-    override val canTravelBetweenRegions = true
-
     // region names
     override val nameWithJob = "$name the $job"
     override val fullName = nameWithJob
-
+    override val nameForStory = nameWithJob
     // "$arriveName has arrived."
-    override val arriveName = fullName
-
+    override val arriveName = nameWithJob
     // "The body of $finalCleanupName crumbles to dust."
     override val finalCleanupName = nameWithJob
-
     // "$stringPrefix$deathName dies."
     override val deathName = nameWithJob
 

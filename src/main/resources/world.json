@@ -1,8 +1,9 @@
 [
   {
     "region-name": "The Town",
-    "max-npcs": 10,
-    "max-healers": 20,
+    "max-npcs": 4,
+    "max-healers": 2,
+    "max-wizards": 2,
     "subregions": [
       {
         "subregion-name": "Town Square",
@@ -225,7 +226,14 @@
   },
   {
     "region-name": "Gert's farm",
-    "max-npcs": 2,
+    "max-farmers": 2,
+    "max-monsters": 1,
+    "monsters": [
+      "aphid",
+      "farm slug",
+      "small angry gopher",
+      "tiny farm mouse"
+    ],
     "subregions": [
       {
         "subregion-name": "Entrance",

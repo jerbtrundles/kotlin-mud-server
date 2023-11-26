@@ -320,6 +320,21 @@
       "health": 25,
       "magic": 0
     }
+  },
+  {
+    "name": "aphid",
+    "keywords": [ "aphid" ]
+  },
+  {
+    "name": "farm slug",
+    "keywords": [ "slug" ]
+  },
+  {
+    "name": "small angry gopher",
+    "keywords": [ "gopher" ]
+  },
+  {
+    "name": "tiny farm mouse",
+    "keywords": [ "mouse" ]
   }
-
 ]

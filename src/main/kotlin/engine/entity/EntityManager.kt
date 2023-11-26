@@ -20,6 +20,8 @@ class EntityManager(
     val maxNpcs: Int,
     val maxJanitors: Int,
     val maxHealers: Int,
+    val maxWizards: Int,
+    val maxFarmers: Int,
     val monsterTemplates: List<EntityMonsterTemplate>
 ) {
     companion object {
@@ -36,6 +38,8 @@ class EntityManager(
     val allNpcs = mutableListOf<EntityBase>()
     val allJanitors = mutableListOf<EntityBase>()
     val allHealers = mutableListOf<EntityBase>()
+    val allWizards = mutableListOf<EntityBase>()
+    val allFarmers = mutableListOf<EntityBase>()
 
     suspend fun start(context: CoroutineContext) =
         withContext(context) {
@@ -47,6 +51,10 @@ class EntityManager(
                 addJanitors(this)
                 Game.delay(2000)
                 addHealers(this)
+                Game.delay(2000)
+                addWizards(this)
+                Game.delay(2000)
+                addFarmers(this)
                 Game.delay(2000)
                 launch { removeSearchedEntities(allMonsters) }
                 Game.delay(2000)
@@ -70,7 +78,7 @@ class EntityManager(
             level = 1,
             job = allNpcJobs.random(),
             behavior = EntityBehavior.defaultNpc,
-            inventory = Inventory() //Inventory.createWithRandomStuff()
+            inventory = Inventory.defaultNpc()
         )
 
     private fun createHealer() =
@@ -84,6 +92,17 @@ class EntityManager(
             )
         )
 
+    private fun createWizard() =
+        EntityFriendlyNpc(
+            name = allNpcNames.random(),
+            level = 1,
+            job = "wizard",
+            behavior = EntityBehavior.wizard,
+            spells = mutableMapOf(
+                Spell.spellMinorFire.name to Spell.spellMinorFire
+            )
+        )
+
     private fun createJanitor() =
         EntityFriendlyNpc(
             name = allNpcNames.random(),
@@ -94,6 +113,18 @@ class EntityManager(
             delayMin = 500,
             delayMax = 1000,
             weapon = ItemTemplates.createItemFromString("broom") as ItemWeapon
+        )
+
+    private fun createFarmer() =
+        EntityFriendlyNpc(
+            name = allNpcNames.random(),
+            level = 1,
+            job = "farmer",
+            behavior = EntityBehavior.farmer,
+            delayMin = 500,
+            delayMax = 1000,
+            canTravelBetweenRegions = false,
+            weapon = ItemTemplates.createItemFromString("pitchfork") as ItemWeapon
         )
 
     private fun createBerserker() =
@@ -130,6 +161,10 @@ class EntityManager(
 
     private suspend fun addHealers(scope: CoroutineScope) =
         addEntities(allHealers, maxHealers, scope, ::createHealer)
+    private suspend fun addWizards(scope: CoroutineScope) =
+        addEntities(allWizards, maxWizards, scope, ::createWizard)
+    private suspend fun addFarmers(scope: CoroutineScope) =
+        addEntities(allFarmers, maxFarmers, scope, ::createFarmer)
 
     private suspend fun addEntities(
         allEntities: MutableList<EntityBase>,
@@ -141,6 +176,12 @@ class EntityManager(
             allEntities.add(this)
             scope.launch {
                 goLiveYourLifeAndBeFree(initialRoom = region.randomRoom)
+            }
+            scope.launch {
+                beHealed()
+            }
+            scope.launch {
+                beMagicallyHealed()
             }
         }
     }
