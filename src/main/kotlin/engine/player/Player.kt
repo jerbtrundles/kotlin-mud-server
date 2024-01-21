@@ -21,11 +21,11 @@ class Player(
     private val webSocketSession: DefaultWebSocketSession
 ) {
     val attributes = EntityAttributes.player
-    var coordinates = WorldCoordinates(0, 0, 0)
+    var coordinates = WorldCoordinates("town", 0, 0)
     var level = 1
     var experience = 0
     val currentRoom
-        get() = World.getRoomFromCoordinates(coordinates)
+        get() = World.getRoomFromCoordinates(coordinates)!!
     var posture = EntityPosture.STANDING
     val inventory: Inventory = Inventory()
     var weapon: ItemWeapon? = null
@@ -68,7 +68,7 @@ class Player(
     // endregion
 
     private fun sendCurrentRoomString() {
-        val region = World.regions[coordinates.region]
+        val region = World.regions[coordinates.region]!!
         val subregion = region.subregions[coordinates.subregion]
         val room = subregion.rooms[coordinates.room]
 
@@ -132,7 +132,7 @@ class Player(
         } ?: doUnknown()
 
     private fun doLookCurrentRoom() {
-        val region = World.regions[coordinates.region]
+        val region = World.regions[coordinates.region]!!
         val subregion = region.subregions[coordinates.subregion]
         val room = subregion.rooms[coordinates.room]
 

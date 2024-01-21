@@ -14,6 +14,7 @@ import engine.item.*
 import engine.magic.Spell
 import engine.magic.SpellEffect
 import engine.magic.SpellEffectType
+import engine.magic.Spells
 import engine.utility.appendLine
 import engine.utility.Common.d100
 import engine.world.Connection
@@ -38,7 +39,7 @@ abstract class EntityBase(
     val job: String = "",
     val arriveStringSuffix: String = "walks in",
     private val unequippedWeaponString: String = "fists",
-    val spells: MutableMap<String, Spell> = mutableMapOf()
+    val spells: MutableList<String> = mutableListOf()
 ) {
     abstract val canTravelBetweenRegions: Boolean
 
@@ -172,12 +173,12 @@ abstract class EntityBase(
         }
     }
 
-    suspend fun beMagicallyHealed() {
+    suspend fun beMagicallyHealedByTheDebugFairy() {
         while (isAlive && Game.running) {
             if (attributes.currentMagic < attributes.maximumMagic) {
                 val old = "${attributes.currentMagic}/${attributes.maximumMagic}"
                 val new = "${attributes.currentMagic + 1}/${attributes.maximumMagic}"
-                Debug.println("Healing (magic) $name: $old -> $new")
+                Debug.println("Healing (debug magic) $name: $old -> $new")
             }
             attributes.currentMagic++
             doDelay()
@@ -230,7 +231,7 @@ abstract class EntityBase(
         get() = deadAndUnsearchedHostilesInCurrentRoom.size
 
     fun isHostileTo(otherEntity: EntityBase) = faction.isHostileTo(otherEntity.faction)
-    fun isHostileTo(otherId: EntityFactions) = faction.isHostileTo(otherId)
+    fun isHostileTo(otherFaction: EntityFactions) = faction.isHostileTo(otherFaction)
 
     fun doAttackPlayer() =
         if (posture != EntityPosture.STANDING) {
@@ -648,8 +649,9 @@ abstract class EntityBase(
 
     private fun doCastFireAtLivingHostile() {
         currentRoom.randomLivingHostileOrNull(faction)?.let { randomLivingHostile ->
+            Debug.println("EntityBase::doCastFireAtLivingHostile() - $name -> $randomLivingHostile")
             doCastSpell(
-                spell = spells[Spell.spellMinorFire.name]!!,
+                spell = Spells["minor fire"],
                 target = randomLivingHostile
             )
         } // TODO: can this be null?
@@ -657,18 +659,18 @@ abstract class EntityBase(
 
     private fun doHealOther() =
         currentRoom.getRandomInjuredFriendlyOrNull(friend = this)?.let { randomInjuredFriendly ->
+            Debug.println("EntityBase::doHealOther() - $name -> $randomInjuredFriendly")
             doCastSpell(
-                spell = spells[Spell.spellMinorCure.name]!!,
+                spell = Spells["minor heal"],
                 target = randomInjuredFriendly
             )
         } // TODO: can this be null?
 
 
     private fun doCastSpell(spell: Spell, target: EntityBase? = null) =
-    // messaging: spell effect
+
     // remove mp from caster
         // add health to target
-
         with(StringBuilder()) {
             Debug.println(
                 "Casting ${spell.name}, " +
@@ -713,7 +715,7 @@ abstract class EntityBase(
                 target.processDeath()
             }
 
-            Debug.println(this)
+            Debug.print(this)
             sendToAll(this)
         }
 
@@ -723,6 +725,7 @@ abstract class EntityBase(
         when (effect.type) {
             SpellEffectType.RESTORE_HEALTH -> processRestoreHealth(effect, target!!, sb)
             SpellEffectType.FIRE_DAMAGE -> processFireDamage(effect, target!!, sb)
+            else -> { }
         }
     }
 
@@ -824,8 +827,9 @@ abstract class EntityBase(
                 currentRoom.connectionsInRegion.random()
             }
 
-            val newRoom = World.getRoomFromCoordinates(connection.coordinates)
-            doMove(newRoom, connection)
+            World.getRoomFromCoordinates(connection.coordinates)?.let { newRoom ->
+                doMove(newRoom, connection)
+            } ?: Debug.println("EntityBase::doRandomMove() - BAD ROOM RETURNED BY World.getRoomFromCoordinates() - ${connection.coordinatesString}")
         }
 
     private fun doMove(newRoom: Room, connection: Connection) {
@@ -885,8 +889,8 @@ abstract class EntityBase(
             EntitySituation.FOUND_BETTER_ARMOR -> foundBetterArmor()
             EntitySituation.FOUND_BETTER_WEAPON -> foundBetterWeapon()
 
-            EntitySituation.WEAPON_IN_CURRENT_ROOM -> inventory.containsWeapon()
-            EntitySituation.ARMOR_IN_CURRENT_ROOM -> inventory.containsArmor()
+            EntitySituation.WEAPON_IN_CURRENT_ROOM -> currentRoom.containsWeapon()
+            EntitySituation.ARMOR_IN_CURRENT_ROOM -> currentRoom.containsArmor()
 
             EntitySituation.NO_EQUIPPED_WEAPON -> weapon == null
             EntitySituation.NO_EQUIPPED_ARMOR -> armor == null
@@ -925,14 +929,15 @@ abstract class EntityBase(
     }
 
     private fun canCastSpellWithEffectType(effectType: SpellEffectType): Boolean {
-        val canICastThis = spells.values.any {
-            it.hasEffectType(effectType) && hasEnoughMagicToCast(it)
+        val canICastThis = spells.any {
+            with(Spells[it]) {
+                hasEffectType(effectType) && hasEnoughMagicToCast(this)
+            }
         }
 
         Debug.println("Do I have $effectType: $canICastThis")
         return canICastThis
     }
-
 
     private fun hasEnoughMagicToCast(spell: Spell) =
         attributes.currentMagic >= spell.cost

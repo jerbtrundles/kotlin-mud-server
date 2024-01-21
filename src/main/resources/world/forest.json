@@ -1,0 +1,50 @@
+{
+  "id": "forest",
+  "region-name": "The Forest",
+  "monsters": [
+    "goblin",
+    "treasure goblin"
+  ],
+  "max-monsters": 5,
+  "subregions": [
+    {
+      "subregion-name": "Entrance",
+      "rooms": [
+        {
+          "coordinates": "forest, 0, 0",
+          "description": "This is the forest.",
+          "connections": [
+            "town, 0, 0 - go gates",
+            "forest, 0, 1 - go northwest",
+            "forest, 0, 3 - go northeast"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 1",
+          "description": "This is the forest.",
+          "connections": [
+            "forest, 0, 0 - go southeast",
+            "forest, 0, 2 - go northeast"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 2",
+          "description": "This is the forest. You also see an opening that leads to an orc burrow.",
+          "connections": [
+            "forest, 0, 1 - go southwest",
+            "forest, 0, 3 - go southeast",
+            "burrow, 0, 0 - go opening"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 3",
+          "description": "This is the forest.",
+          "connections": [
+            "forest, 0, 2 - go northwest",
+            "forest, 0, 0 - go southwest"
+          ]
+        }
+      ]
+    }
+  ]
+}

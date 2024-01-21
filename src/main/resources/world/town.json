@@ -1,0 +1,130 @@
+{
+  "id": "town",
+  "region-name": "The Town",
+  "max-npcs": 4,
+  "max-healers": 2,
+  "max-wizards": 2,
+  "subregions": [
+    {
+      "subregion-name": "Town Square",
+      "rooms": [
+        {
+          "coordinates": "town, 0, 0",
+          "description": "This is the northwest room. The town gates here lead to the forest.",
+          "connections": [
+            "forest, 0, 0 - go gates",
+            "town, 0, 1 - go east",
+            "town, 0, 3 - go south",
+            "town, 0, 4 - go southeast"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 1",
+          "description": "This is the north room.",
+          "connections": [
+            "town, 0, 0 - go west",
+            "town, 0, 2 - go east",
+            "town, 0, 4 - go south"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 2",
+          "description": "This is the northeast room. Trun's dull weapons is here.",
+          "connections": [
+            "town, 0, 1 - go west",
+            "town, 0, 4 - go southwest",
+            "town, 0, 5 - go south",
+            "town, 1, 0 - go shop"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 3",
+          "description": "This is the west room. The town bank is here.",
+          "connections": [
+            "town, 0, 0 - go north",
+            "town, 0, 4 - go east",
+            "town, 0, 6 - go south",
+            "town, 2, 0 - go bank"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 4",
+          "description": "This is the central room.",
+          "connections": [
+            "town, 0, 0 - go northwest",
+            "town, 0, 1 - go north",
+            "town, 0, 2 - go northeast",
+            "town, 0, 3 - go west",
+            "town, 0, 5 - go east",
+            "town, 0, 6 - go southwest",
+            "town, 0, 7 - go south",
+            "town, 0, 8 - go southeast"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 5",
+          "description": "This is the east room.",
+          "connections": [
+            "town, 0, 2 - go north",
+            "town, 0, 4 - go west",
+            "town, 0, 8 - go south"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 6",
+          "description": "This is the southwest room. A dirt path leads down to Gert's farm.",
+          "connections": [
+            "town, 0, 3 - go north",
+            "town, 0, 4 - go northeast",
+            "town, 0, 7 - go east",
+            "farm, 0, 0 - go path"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 7",
+          "description": "This is the south room.",
+          "connections": [
+            "town, 0, 4 - go north",
+            "town, 0, 6 - go west",
+            "town, 0, 8 - go east"
+          ]
+        },
+        {
+          "coordinates": "town, 0, 8",
+          "description": "This is the southeast room.",
+          "connections": [
+            "town, 0, 4 - go northwest",
+            "town, 0, 5 - go north",
+            "town, 0, 7 - go west"
+          ]
+        }
+      ]
+    },
+    {
+      "subregion-name": "Trun's dull weapons",
+      "rooms": [
+        {
+          "coordinates": "town, 1, 0",
+          "description": "This is the weapons shop.",
+          "is-shop": "true",
+          "connections": [
+            "town, 0, 2 - go out"
+          ]
+        }
+      ]
+    },
+    {
+      "subregion-name": "Town Bank",
+      "rooms": [
+        {
+          "coordinates": "town, 2, 0",
+          "description": "This is the town bank.",
+          "is-bank": "true",
+          "connections": [
+            "town, 0, 3 - go out"
+          ]
+        }
+      ]
+    }
+  ]
+}

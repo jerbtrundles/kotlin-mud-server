@@ -34,7 +34,7 @@ object Debug {
     fun println(str: String) {
         if (debugging) {
             str.lines().forEachIndexed { i, line ->
-                if(i > 0) {
+                if (i > 0) {
                     print("\t\t")
                 }
                 kotlin.io.println("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
@@ -42,7 +42,23 @@ object Debug {
         }
     }
 
+    fun print(str: String) {
+        if (debugging) {
+            str.lines().forEachIndexed { i, line ->
+                if (i > 0) {
+                    print("\t\t")
+                }
+                if (i < str.lines().size - 1) {
+                    kotlin.io.println("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
+                } else {
+                    kotlin.io.print("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
+                }
+            }
+        }
+    }
+
     fun println(sb: StringBuilder) = println(sb.toString())
+    fun print(sb: StringBuilder) = print(sb.toString())
 
     fun init() {
         addRandomItemsToRandomRooms()

@@ -1,14 +1,15 @@
 package engine.world
 
-import engine.utility.Common
-import engine.world.template.RegionTemplate
+import java.nio.file.Files
+import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 object World {
-    var regions = listOf<Region>()
+    var regions = mapOf<String, Region>()
 
     val void = Room(
         id = -1,
-        coordinates = WorldCoordinates(-1, -1, -1),
+        coordinates = WorldCoordinates("", -1, -1),
         description = "A cold, dark region of nothingness.",
         connections = listOf(
             Connection("0, 0, 0 - go out")
@@ -16,15 +17,13 @@ object World {
     )
 
     val zero
-        get() = regions[0].subregions[0].rooms[0]
+        get() = regions["town"]!!.subregions[0].rooms[0]
 
     fun getRoomFromCoordinates(coordinates: WorldCoordinates) =
-        regions[coordinates.region]
-            .subregions[coordinates.subregion]
-            .rooms[coordinates.room]
+        regions[coordinates.region]?.subregions?.get(coordinates.subregion)?.rooms?.get(coordinates.room)
 
     val allRooms
-        get() = regions.flatMap { region ->
+        get() = regions.values.flatMap { region ->
             region.subregions.flatMap { subregion ->
                 subregion.rooms
             }
@@ -33,7 +32,18 @@ object World {
     fun getRandomRoom() = allRooms.random()
 
     fun load(c: Class<() -> Unit>) {
-        val regionTemplates = Common.parseArrayFromJson<RegionTemplate>(c, "/world.json")
-        regions = regionTemplates.map { regionTemplate -> regionTemplate.toRegion() }
+        val resourcePath = Paths.get(c.getResource("/world/")!!.toURI())
+        regions = Files.walk(resourcePath)
+                .use { paths ->
+                    paths
+                        .filter { Files.isRegularFile(it) }
+                        .map { filePath ->
+                            val relativePath = "/world/" + resourcePath.relativize(filePath).toString()
+                            val region = Region.fromFilePath(c, relativePath)
+                            region.id to region
+                        }
+                        .asSequence()
+                        .toMap()
+                }
     }
 }

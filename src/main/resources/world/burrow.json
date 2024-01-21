@@ -1,0 +1,48 @@
+{
+  "id": "burrow",
+  "region-name": "Orc burrow",
+  "monsters": [
+    "lesser orc"
+  ],
+  "max-monsters": 5,
+  "subregions": [
+    {
+      "subregion-name": "Entrance",
+      "rooms": [
+        {
+          "coordinates": "burrow, 0, 0",
+          "description": "This is the entrance to an orc burrow. An opening leads outside.",
+          "connections": [
+            "forest, 0, 2 - go opening",
+            "burrow, 0, 1 - go northwest",
+            "burrow, 0, 3 - go northeast"
+          ]
+        },
+        {
+          "coordinates": "burrow, 0, 1",
+          "description": "This is an orc burrow.",
+          "connections": [
+            "burrow, 0, 0 - go southeast",
+            "burrow, 0, 2 - go northeast"
+          ]
+        },
+        {
+          "coordinates": "burrow, 0, 2",
+          "description": "This is an orc burrow.",
+          "connections": [
+            "burrow, 0, 1 - go southwest",
+            "burrow, 0, 3 - go southeast"
+          ]
+        },
+        {
+          "coordinates": "burrow, 0, 3",
+          "description": "This is an orc burrow.",
+          "connections": [
+            "burrow, 0, 2 - go northwest",
+            "burrow, 0, 0 - go southwest"
+          ]
+        }
+      ]
+    }
+  ]
+}

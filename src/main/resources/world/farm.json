@@ -1,0 +1,52 @@
+{
+  "id": "farm",
+  "region-name": "Gert's farm",
+  "max-farmers": 2,
+  "max-monsters": 1,
+  "monsters": [
+    "aphid",
+    "farm slug",
+    "small angry gopher",
+    "tiny farm mouse"
+  ],
+  "subregions": [
+    {
+      "subregion-name": "Entrance",
+      "rooms": [
+        {
+          "coordinates": "farm, 0, 0",
+          "description": "Gert's farm has been a staple in this town for over a month. A dirt path leads back to the main part of town.",
+          "connections": [
+            "town, 0, 6 - go path",
+            "farm, 0, 1 - go west",
+            "farm, 0, 3 - go south"
+          ]
+        },
+        {
+          "coordinates": "farm, 0, 1",
+          "description": "Gert's farm has been a staple in this town for over a month.",
+          "connections": [
+            "farm, 0, 0 - go east",
+            "farm, 0, 2 - go south"
+          ]
+        },
+        {
+          "coordinates": "farm, 0, 2",
+          "description": "Gert's farm has been a staple in this town for over a month.",
+          "connections": [
+            "farm, 0, 1 - go north",
+            "farm, 0, 3 - go east"
+          ]
+        },
+        {
+          "coordinates": "farm, 0, 3",
+          "description": "Gert's farm has been a staple in this town for over a month.",
+          "connections": [
+            "farm, 0, 2 - go west",
+            "farm, 0, 0 - go north"
+          ]
+        }
+      ]
+    }
+  ]
+}

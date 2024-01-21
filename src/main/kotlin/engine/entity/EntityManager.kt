@@ -87,8 +87,8 @@ class EntityManager(
             level = 1,
             job = "healer",
             behavior = EntityBehavior.healer,
-            spells = mutableMapOf(
-                Spell.spellMinorCure.name to Spell.spellMinorCure
+            spells = mutableListOf(
+                "minor heal"
             )
         )
 
@@ -98,8 +98,8 @@ class EntityManager(
             level = 1,
             job = "wizard",
             behavior = EntityBehavior.wizard,
-            spells = mutableMapOf(
-                Spell.spellMinorFire.name to Spell.spellMinorFire
+            spells = mutableListOf(
+                "minor fire"
             )
         )
 
@@ -181,7 +181,7 @@ class EntityManager(
                 beHealed()
             }
             scope.launch {
-                beMagicallyHealed()
+                beMagicallyHealedByTheDebugFairy()
             }
         }
     }

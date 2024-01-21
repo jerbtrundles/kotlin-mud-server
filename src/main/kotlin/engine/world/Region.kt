@@ -2,9 +2,11 @@ package engine.world
 
 import engine.entity.EntityManager
 import engine.entity.EntityMonsterTemplate
+import engine.utility.Common
+import engine.world.template.RegionTemplate
 
 class Region(
-    val id: Int,
+    val id: String,
     val name: String,
     val subregions: List<Subregion>,
     monsterTemplates: List<EntityMonsterTemplate>,
@@ -40,5 +42,10 @@ class Region(
             sb.appendLine(subregion)
         }
         return sb.toString()
+    }
+
+    companion object {
+        fun fromFilePath(c: Class<() -> Unit>, filePath: String) =
+            Common.parseFromJson<RegionTemplate>(c, filePath).toRegion()
     }
 }

@@ -54,6 +54,9 @@ object Common {
     inline fun <reified T> parseArrayFromJson(c: Class<() -> Unit>, fileName: String): List<T> =
         Klaxon().parseArray(loadJson(c, fileName))!!
 
+    inline fun <reified T> parseFromJson(c: Class<() -> Unit>, fileName: String): T =
+        Klaxon().parse(loadJson(c, fileName))!!
+
     fun loadJson(c: Class<() -> Unit>, fileName: String) =
         c.getResourceAsStream(fileName)?.bufferedReader()?.readText()!!
 

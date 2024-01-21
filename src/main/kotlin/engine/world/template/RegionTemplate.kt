@@ -7,6 +7,8 @@ import engine.entity.MonsterTemplates
 import engine.world.Region
 
 class RegionTemplate(
+    @Json(name = "id")
+    val id: String,
     @Json(name = "region-name")
     val name: String,
     @Json(name = "subregions")
@@ -26,12 +28,6 @@ class RegionTemplate(
     @Json(name = "max-farmers")
     val maxFarmers: Int = 0
 ) {
-    val id = nextInt()
-
-    companion object {
-        private var theInt = 0
-        private fun nextInt() = theInt++
-    }
     fun toRegion() =
         Region(
             id = id,

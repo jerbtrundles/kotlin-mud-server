@@ -1,41 +1,30 @@
 [
   {
-    "name": "fire",
-    "attributes": [
-      {
-        "type": "DAMAGE-FIRE",
-        "min-damage": 5,
-        "max-damage": 10
-      }
-    ],
-    "attack-strings": [
-      "Flames leap from your fingers, burning the !target for !damage damage."
+    "name": "minor fire",
+    "cost": 2,
+    "effects": [
+      "FIRE_DAMAGE TARGET 5"
     ]
   },
   {
-    "name": "ice",
-    "attributes": [
-      {
-        "type": "DAMAGE-ICE",
-        "min-damage": 5,
-        "max-damage": 10
-      }
-    ],
-    "attack-strings": [
-      "Shards of ice hurtle toward the !target, hitting for !damage damage."
+    "name": "minor ice",
+    "cost": 2,
+    "effects": [
+      "ICE_DAMAGE TARGET 5"
     ]
   },
   {
-    "name": "bolt",
-    "attributes": [
-      {
-        "type": "DAMAGE-LIGHTNING",
-        "min-damage": 5,
-        "max-damage": 10
-      }
-    ],
-    "attack-strings": [
-      "A bolt of lightning arcs between you and the !target, hitting for !damage damage."
+    "name": "minor bolt",
+    "cost": 2,
+    "effects": [
+      "LIGHTNING_DAMAGE TARGET 5"
+    ]
+  },
+  {
+    "name": "minor heal",
+    "cost": 2,
+    "effects": [
+      "RESTORE_HEALTH TARGET 5"
     ]
   }
 ]

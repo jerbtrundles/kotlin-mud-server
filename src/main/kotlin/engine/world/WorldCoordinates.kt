@@ -1,7 +1,7 @@
 package engine.world
 
 data class WorldCoordinates(
-    val region: Int,
+    val region: String,
     val subregion: Int,
     val room: Int
 ) {
@@ -13,7 +13,7 @@ data class WorldCoordinates(
         fun parseFromString(str: String): WorldCoordinates {
             val tokens = str.split(",").map { it.trim() }
             return WorldCoordinates(
-                region = tokens[0].toInt(),
+                region = tokens[0],
                 subregion = tokens[1].toInt(),
                 room = tokens[2].toInt()
             )

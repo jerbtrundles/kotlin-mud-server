@@ -23,7 +23,7 @@ class EntityFriendlyNpc(
     inventory: Inventory = Inventory.defaultNpc(),
     weapon: ItemWeapon? = null,
     armor: ItemArmor? = null,
-    spells: MutableMap<String, Spell> = mutableMapOf(),
+    spells: MutableList<String> = mutableListOf(),
     override val canTravelBetweenRegions: Boolean = true
 ) : EntityBase(
     faction = EntityFaction.factionNpc,

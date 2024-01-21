@@ -2,6 +2,7 @@ import debug.Debug
 import engine.entity.EntityManager
 import engine.entity.MonsterTemplates
 import engine.item.template.ItemTemplates
+import engine.magic.Spells
 import engine.world.World
 import engine.world.template.ShopTemplates
 import io.ktor.server.application.*
@@ -19,7 +20,7 @@ fun main() {
     init()
 
     runBlocking {
-        World.regions.forEach { region ->
+        World.regions.values.forEach { region ->
             launch { region.entityManager.start(this.coroutineContext) }
         }
     }
@@ -42,6 +43,7 @@ fun loadResources() {
     // no dependencies
     ItemTemplates.load(c)
     EntityManager.load(c)
+    Spells.load(c)
 
     // needs items first
     MonsterTemplates.load(c)
