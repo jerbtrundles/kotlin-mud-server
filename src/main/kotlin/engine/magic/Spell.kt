@@ -6,5 +6,11 @@ class Spell(
     val effects: List<SpellEffect>
 ) {
     fun hasEffectType(effectType: SpellEffectType) = effects.any { it.type == effectType }
+    fun isDamageSpell() =
+        effects.any {
+            it.type == SpellEffectType.ICE_DAMAGE
+                    || it.type == SpellEffectType.FIRE_DAMAGE
+                    || it.type == SpellEffectType.LIGHTNING_DAMAGE
+        }
 }
 

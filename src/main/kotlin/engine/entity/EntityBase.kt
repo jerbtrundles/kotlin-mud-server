@@ -2,6 +2,7 @@ package engine.entity
 
 import engine.Inventory
 import debug.Debug
+import debug.DebugMessageType
 import engine.Message
 import engine.Messages
 import engine.entity.behavior.EntityAction
@@ -42,6 +43,12 @@ abstract class EntityBase(
     val spells: MutableList<String> = mutableListOf()
 ) {
     abstract val canTravelBetweenRegions: Boolean
+
+    val naturalHealthRestorationRate = 1
+    val naturalMagicRestorationRate = 1
+
+    val damageSpells: List<Spell>
+        get() = spells.map { spell -> Spells[spell] }.filter { it.isDamageSpell() }
 
     private var currentRoom: Room = World.void
     private var posture: EntityPosture = EntityPosture.STANDING
@@ -161,26 +168,32 @@ abstract class EntityBase(
         doFinalCleanup()
     }
 
-    suspend fun beHealed() {
+    suspend fun naturalHealthRestoration() {
         while (isAlive && Game.running) {
             if (attributes.currentHealth < attributes.maximumHealth) {
                 val old = "${attributes.currentHealth}/${attributes.maximumHealth}"
-                val new = "${attributes.currentHealth + 1}/${attributes.maximumHealth}"
-                Debug.println("Healing $name: $old -> $new")
+                val new = "${attributes.currentHealth + naturalHealthRestorationRate}/${attributes.maximumHealth}"
+                Debug.println(
+                    "Natural health restoration $name: $old -> $new",
+                    DebugMessageType.ENTITY_PASSIVE_EFFECT
+                )
             }
-            attributes.currentHealth++
+            attributes.currentHealth += naturalHealthRestorationRate
             doDelay()
         }
     }
 
-    suspend fun beMagicallyHealedByTheDebugFairy() {
+    suspend fun naturalMagicRestoration() {
         while (isAlive && Game.running) {
             if (attributes.currentMagic < attributes.maximumMagic) {
                 val old = "${attributes.currentMagic}/${attributes.maximumMagic}"
-                val new = "${attributes.currentMagic + 1}/${attributes.maximumMagic}"
-                Debug.println("Healing (debug magic) $name: $old -> $new")
+                val new = "${attributes.currentMagic + naturalMagicRestorationRate}/${attributes.maximumMagic}"
+                Debug.println(
+                    "Natural magic restoration $name: $old -> $new",
+                    DebugMessageType.ENTITY_PASSIVE_EFFECT
+                )
             }
-            attributes.currentMagic++
+            attributes.currentMagic += naturalMagicRestorationRate
             doDelay()
         }
     }
@@ -190,13 +203,6 @@ abstract class EntityBase(
             doIsDead()
         } else {
             val action = behavior.getNextAction(this)
-
-            // debug print here instead of after doAction(), because doAction() can reroute to a secondary action
-            // and maybe lead to reverse/inaccurate reporting
-            if (!Debug.debugActionsExcludedFromPrint.contains(action)) {
-                Debug.println("EntityBase::doAction() - $name - $action")
-            }
-
             doAction(action)
         }
 
@@ -301,6 +307,12 @@ abstract class EntityBase(
                     randomLivingHostile.processDeath()
                 }
 
+                Debug.println(
+                    "EntityBase::doAttackRandomLivingHostile()\n" +
+                            "$coordinates - $nameWithJob -> ${randomLivingHostile.nameWithJob} " +
+                            "[$damage damage, ${randomLivingHostile.attributes.currentHealth} health left]",
+                    DebugMessageType.ENTITY_ATTACK
+                )
                 sendToAll(this)
             }
         }
@@ -342,6 +354,11 @@ abstract class EntityBase(
                         currentRoom.addInventory(deadHostile.inventory)
                     }
 
+                    Debug.println(
+                        "EntityBase::doSearchRandomUnsearchedDeadHostile()\n" +
+                                "$coordinates - $nameWithJob - ${deadHostile.nameWithJob}",
+                        DebugMessageType.ENTITY_SEARCH
+                    )
                     sendToAll(this)
                 }
 
@@ -477,6 +494,12 @@ abstract class EntityBase(
                     appendLine(sayText)
                 }
                 appendLine(getString(item))
+
+                Debug.println(
+                    "EntityBase::doGetValuableItem()\n" +
+                            "$coordinates - $nameWithJob - ${item.name}",
+                    DebugMessageType.ENTITY_GET_VALUABLE_ITEM
+                )
                 sendToAll(this)
             }
         }
@@ -530,7 +553,6 @@ abstract class EntityBase(
     }
 
     private fun doGetRandomBetterWeapon() {
-        Debug.println("EntityBase::doGetRandomBetterWeapon()")
         (inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)
             ?: currentRoom.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0))
             ?.let { newWeapon ->
@@ -540,15 +562,19 @@ abstract class EntityBase(
                         currentRoom.addItem(oldWeapon)
                     }
 
+                    val oldWeapon = weapon?.name ?: "nothing"
+
                     weapon = newWeapon
                     appendLine(getString(newWeapon))
 
+                    Debug.println(
+                        "EntityBase::doGetRandomBetterWeapon()\n" +
+                                "$coordinates - $nameWithJob - ($oldWeapon -> ${newWeapon.name})",
+                        DebugMessageType.ENTITY_FIND_WEAPON
+                    )
                     sendToAll(this)
                 }
-            } ?: {
-            Debug.println("EntityBase::doGetRandomWeapon() - no weapon in current room")
-            doNothing()
-        }
+            } ?: doNothing()
     }
 
     private fun doGetRandomBetterArmor() {
@@ -561,9 +587,17 @@ abstract class EntityBase(
                         appendLine(dropString(oldArmor))
                     }
 
+                    // for debug messaging; not used otherwise
+                    val oldArmor = armor?.name ?: "nothing"
+
                     armor = newArmor
                     appendLine(getString(newArmor))
 
+                    Debug.println(
+                        "EntityBase::doGetRandomBetterArmor()\n" +
+                                "$coordinates - $nameWithJob - ($oldArmor -> ${newArmor.name})",
+                        DebugMessageType.ENTITY_FIND_ARMOR
+                    )
                     sendToAll(this)
                 }
             } ?: doNothing()
@@ -643,13 +677,22 @@ abstract class EntityBase(
             EntityAction.DRINK_RANDOM_DRINK -> doDrinkRandomDrinkItem()
             EntityAction.HEAL_OTHER -> doHealOther()
             EntityAction.CAST_FIRE_AT_LIVING_HOSTILE -> doCastFireAtLivingHostile()
+            EntityAction.CAST_DAMAGE_SPELL_AT_LIVING_HOSTILE -> doCastDamageSpellAtLivingHostile()
             else -> doNothing()
+        }
+    }
+
+    private fun doCastDamageSpellAtLivingHostile() {
+        currentRoom.randomLivingHostileOrNull(faction)?.let { randomLivingHostile ->
+            doCastSpell(
+                spell = damageSpells.random(),
+                target = randomLivingHostile
+            )
         }
     }
 
     private fun doCastFireAtLivingHostile() {
         currentRoom.randomLivingHostileOrNull(faction)?.let { randomLivingHostile ->
-            Debug.println("EntityBase::doCastFireAtLivingHostile() - $name -> $randomLivingHostile")
             doCastSpell(
                 spell = Spells["minor fire"],
                 target = randomLivingHostile
@@ -659,7 +702,6 @@ abstract class EntityBase(
 
     private fun doHealOther() =
         currentRoom.getRandomInjuredFriendlyOrNull(friend = this)?.let { randomInjuredFriendly ->
-            Debug.println("EntityBase::doHealOther() - $name -> $randomInjuredFriendly")
             doCastSpell(
                 spell = Spells["minor heal"],
                 target = randomInjuredFriendly
@@ -668,16 +710,7 @@ abstract class EntityBase(
 
 
     private fun doCastSpell(spell: Spell, target: EntityBase? = null) =
-
-    // remove mp from caster
-        // add health to target
         with(StringBuilder()) {
-            Debug.println(
-                "Casting ${spell.name}, " +
-                        "cost: ${spell.cost}, " +
-                        "target: ${target?.name ?: "(none)"}"
-            )
-
             appendLine(
                 target?.let {
                     if (this@EntityBase == it) {
@@ -706,7 +739,6 @@ abstract class EntityBase(
             )
 
             attributes.currentMagic -= spell.cost
-            Debug.println(attributes.magicString)
 
             spell.effects.forEach { processSpellEffect(it, target, this) }
 
@@ -715,7 +747,18 @@ abstract class EntityBase(
                 target.processDeath()
             }
 
-            Debug.print(this)
+            target?.let {
+                // TODO: make this better
+                val strength = spell.effects.sumOf { effect -> effect.strength }
+
+                Debug.println(
+                    "EntityBase::doCastSpell()\n" +
+                            "$coordinates - $nameWithJob - ${spell.name} - ${it.nameWithJob} " +
+                            "[$strength strength, ${it.attributes.currentHealth} health left]",
+                    DebugMessageType.ENTITY_CAST_SPELL
+                )
+            } ?: Debug.println("self")
+
             sendToAll(this)
         }
 
@@ -725,22 +768,18 @@ abstract class EntityBase(
         when (effect.type) {
             SpellEffectType.RESTORE_HEALTH -> processRestoreHealth(effect, target!!, sb)
             SpellEffectType.FIRE_DAMAGE -> processFireDamage(effect, target!!, sb)
-            else -> { }
+            else -> {}
         }
     }
 
     private fun processRestoreHealth(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
         // <target> is healed for <effect.strength>
-        Debug.println("Healing ${target.fullName} from ${target.attributes.currentHealth}")
         target.attributes.currentHealth += effect.strength
-        Debug.println("Target health is now ${target.attributes.currentHealth}")
         sb.appendLine(Message.ENTITY_IS_HEALED, target.prefixedRandomName, effect.strength.toString())
     }
 
     private fun processFireDamage(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
-        Debug.println("Hurling a fireball at ${target.fullName}.")
         target.attributes.currentHealth -= effect.strength
-        Debug.println("Target health is now ${target.attributes.currentHealth}")
         sb.appendLine(Message.FIREBALL_HURTLES_AT_ENTITY, target.prefixedRandomName, effect.strength.toString())
     }
 
@@ -829,7 +868,8 @@ abstract class EntityBase(
 
             World.getRoomFromCoordinates(connection.coordinates)?.let { newRoom ->
                 doMove(newRoom, connection)
-            } ?: Debug.println("EntityBase::doRandomMove() - BAD ROOM RETURNED BY World.getRoomFromCoordinates() - ${connection.coordinatesString}")
+            }
+                ?: Debug.println("EntityBase::doRandomMove() - BAD ROOM RETURNED BY World.getRoomFromCoordinates() - ${connection.coordinatesString}")
         }
 
     private fun doMove(newRoom: Room, connection: Connection) {
@@ -873,8 +913,8 @@ abstract class EntityBase(
             EntitySituation.MULTIPLE_HOSTILES -> allHostilesCount > 1
             EntitySituation.ANY_LIVING_HOSTILES -> livingHostilesCount > 0
 
-            EntitySituation.FOUND_ANY_ITEM -> currentRoom.containsItem
-            EntitySituation.FOUND_VALUABLE_ITEM -> currentRoom.containsValuableItem
+            EntitySituation.FOUND_ANY_ITEM -> currentRoom.containsItem()
+            EntitySituation.FOUND_VALUABLE_ITEM -> currentRoom.containsValuableItem()
 
             // TODO: implement these situation checks
             EntitySituation.FOUND_GOOD_ARMOR -> false
@@ -907,7 +947,7 @@ abstract class EntityBase(
             EntitySituation.INJURED_FRIENDLY_IN_ROOM -> currentRoom.containsInjuredFriendly(friend = this)
             EntitySituation.CAN_CAST_HEALING_SPELL -> canCastSpellWithEffectType(SpellEffectType.RESTORE_HEALTH)
             EntitySituation.CAN_CAST_FIRE_SPELL -> canCastSpellWithEffectType(SpellEffectType.FIRE_DAMAGE)
-
+            EntitySituation.CAN_CAST_DAMAGE_SPELL -> damageSpells.isNotEmpty()
             else -> false
         }
 
@@ -916,7 +956,10 @@ abstract class EntityBase(
 
     // region init/cleanup
     private fun doInit(initialRoom: Room) {
-        Debug.println("EntityBase::doInit() - adding $fullName to ${initialRoom.coordinates}")
+        Debug.println(
+            "EntityBase::doInit() - adding $fullName to ${initialRoom.coordinates}",
+            DebugMessageType.ENTITY_ADD_TO_ROOM
+        )
 
         // set initial room and add self
         currentRoom = initialRoom
@@ -935,7 +978,7 @@ abstract class EntityBase(
             }
         }
 
-        Debug.println("Do I have $effectType: $canICastThis")
+        Debug.println("Do I have $effectType: $canICastThis", DebugMessageType.ENTITY_CHECK_FOR_MAGIC_EFFECT)
         return canICastThis
     }
 

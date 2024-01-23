@@ -22,19 +22,22 @@ open class Room(
 
     // npcs, monsters travel only within their current region
     val connectionsInRegion by lazy { connections.filter { it.coordinates.region == coordinates.region } }
-    val containsItem
-        get() = inventory.isNotEmpty()
-    val containsValuableItem
-        get() = inventory.containsValuableItem
 
-    // region entities
     val monsters
         get() = entities.filter { it.faction.id == EntityFactions.MONSTER }
     val npcs
         get() = entities.filter { it.faction.id == EntityFactions.NPC }
     var players = mutableListOf<Player>()
-    val hasNoEntities
-        get() = entities.isEmpty() && players.isEmpty()
+
+    fun containsItem() =
+        inventory.isNotEmpty()
+
+    fun containsValuableItem() =
+        inventory.containsValuableItem()
+
+    // region entities
+    fun containsNoEntities() =
+        entities.isEmpty() && players.isEmpty()
 
     fun containsLivingPlayer() = players.any { it.isAlive }
     fun containsLivingEntity() = entities.any { it.isAlive }
@@ -57,37 +60,35 @@ open class Room(
                 }
 
     private val npcsString: String
-        get() = with(StringBuilder()) {
+        get() =
             if (npcs.isNotEmpty()) {
-                appendLine(
-                    "You also see " +
-                            Common.collectionString(
-                                itemStrings = npcs.map { npc -> npc.nameForCollectionString },
-                                includeIndefiniteArticles = false
-                            ) + "."
-                )
+                "You also see " +
+                        Common.collectionString(
+                            itemStrings = npcs.map { npc -> npc.nameForCollectionString },
+                            includeIndefiniteArticles = false
+                        ) + "."
+            } else {
+                ""
             }
-            return toString()
-        }
 
     private val monstersString: String
-        get() = if (monsters.isEmpty()) {
-            ""
-        } else {
-            "You also see " +
-                    Common.collectionString(
-                        monsters.map { monster -> monster.nameForCollectionString }
-                    ) + ".\n"
-        }
+        get() =
+            if (monsters.isNotEmpty()) {
+                ""
+            } else {
+                "You also see " +
+                        Common.collectionString(
+                            monsters.map { monster -> monster.nameForCollectionString }
+                        ) + ".\n"
+            }
 
     private val inventoryString: String
-        get() = if (inventory.isEmpty()) {
-            ""
-        } else {
-            "You also see ${inventory.collectionString}.\n"
-        }
-
-    override fun toString() = "Room: $coordinates"
+        get() =
+            if (inventory.isNotEmpty()) {
+                "You also see ${inventory.collectionString}.\n"
+            } else {
+                ""
+            }
 
     val displayString
         get() = StringBuilder()

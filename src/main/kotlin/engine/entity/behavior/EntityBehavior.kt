@@ -47,9 +47,12 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             listOf(
 //                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
 //                EntityPreference.defaultPreferenceFindValuableItem,
-                EntityPreference.defaultPreferenceCastFireAtLivingHostile,
+//                EntityPreference.defaultPreferenceCastFireAtLivingHostile,
+                EntityPreference.defaultPreferenceCastDamageSpellAtLivingHostile,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
 //                EntityPreference.defaultPreferenceAttackLivingHostile,
+                // TODO: wizards would only care about certain kinds of armor
+                //  any class might care about only some types of armor
 //                EntityPreference.defaultPreferenceFindBetterWeapon,
 //                EntityPreference.defaultPreferenceFindBetterArmor
             )

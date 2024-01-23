@@ -99,7 +99,9 @@ class EntityManager(
             job = "wizard",
             behavior = EntityBehavior.wizard,
             spells = mutableListOf(
-                "minor fire"
+                "minor fire",
+                "minor ice",
+                "minor bolt"
             )
         )
 
@@ -178,10 +180,10 @@ class EntityManager(
                 goLiveYourLifeAndBeFree(initialRoom = region.randomRoom)
             }
             scope.launch {
-                beHealed()
+                naturalHealthRestoration()
             }
             scope.launch {
-                beMagicallyHealedByTheDebugFairy()
+                naturalMagicRestoration()
             }
         }
     }

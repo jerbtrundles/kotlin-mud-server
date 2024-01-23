@@ -41,6 +41,9 @@ class Inventory(
             }
     }
 
+    val valuableItems
+        get() = items.filter { it.value > Debug.VALUABLE_ITEM_MINIMUM_VALUE }
+
     // region empty checks
     fun isEmpty() =
         items.isEmpty()
@@ -72,8 +75,8 @@ class Inventory(
     // endregion
 
     // region contains item
-    val containsValuableItem
-        get() = items.any { it.value >= Debug.valuableItemMinimumValue }
+    fun containsValuableItem() =
+        items.any { it.value >= Debug.VALUABLE_ITEM_MINIMUM_VALUE }
 
     fun containsWeapon() =
         items.any { it is ItemWeapon }
@@ -167,7 +170,7 @@ class Inventory(
         }
 
     fun getAndRemoveRandomValuableItem() =
-        items.filter { it.value > Debug.valuableItemMinimumValue }.randomOrNull()?.let {
+        valuableItems.randomOrNull()?.let {
             items.remove(it)
             it
         }

@@ -1,9 +1,13 @@
 {
   "id": "town",
   "region-name": "The Town",
-  "max-npcs": 4,
-  "max-healers": 2,
-  "max-wizards": 2,
+  "max-npcs": 1,
+  "max-healers": 5,
+  "max-wizards": 10,
+  "max-monsters": 5,
+  "monsters": [
+    "goblin"
+  ],
   "subregions": [
     {
       "subregion-name": "Town Square",

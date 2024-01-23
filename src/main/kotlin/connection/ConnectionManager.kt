@@ -6,7 +6,8 @@ import kotlinx.coroutines.runBlocking
 object ConnectionManager {
     val webSocketSessions = mutableListOf<DefaultWebSocketSession>()
 
-    fun sendToAll(what: String) = runBlocking {
-        webSocketSessions.forEach { it.send(what) }
-    }
+    fun sendToAll(what: String) =
+        runBlocking {
+            webSocketSessions.forEach { it.send(what) }
+        }
 }

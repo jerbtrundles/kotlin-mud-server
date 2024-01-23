@@ -9,56 +9,44 @@ import engine.world.World
 import kotlin.text.StringBuilder
 
 object Debug {
-    private enum class Level {
-        VERBOSE,
-    }
-
-    private val debugLevel = Level.VERBOSE
-    private const val debugging = true
-
-    const val valuableItemMinimumValue = 50
+    const val VALUABLE_ITEM_MINIMUM_VALUE = 50
     const val npcDelayMin = 4000
     const val npcDelayMax = 6000
     const val monsterDelayMin = 6000
     const val monsterDelayMax = 8000
     const val monsterAttackDebuff = 0
     const val npcAttackBuff = 0
-    private const val initialWeapons = 8
-    private const val initialArmor = 8
+    private const val initialWeapons = 20
+    private const val initialArmor = 20
     private const val initialJunk = 0
-    private const val initialGems = 0
+    private const val initialGems = 10
     private const val initialFood = 0
     private const val initialDrink = 0
     private const val initialContainer = 0
 
-    fun println(str: String) {
-        if (debugging) {
-            str.lines().forEachIndexed { i, line ->
+    private const val extraTabs = "\t\t"
+    private const val tabs = "\t\t\t\t\t\t\t\t\t\t\t\t\t"
+
+    private const val debugging = true
+
+    fun println(str: String, messageType: DebugMessageType = DebugMessageType.DEFAULT) {
+        if (debugging && DebugMessageType.enabled(messageType)) {
+            val lines = str.lines().filter { it.isNotEmpty() }
+            lines.forEachIndexed { i, line ->
+                // indent any extra lines
                 if (i > 0) {
-                    print("\t\t")
+                    print(extraTabs)
                 }
-                kotlin.io.println("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
+
+                kotlin.io.println("$tabs[$line]")
             }
+        } else {
+            // kotlin.io.println("$tabs[SKIPPED MESSAGE OF TYPE $messageType]")
         }
     }
 
-    fun print(str: String) {
-        if (debugging) {
-            str.lines().forEachIndexed { i, line ->
-                if (i > 0) {
-                    print("\t\t")
-                }
-                if (i < str.lines().size - 1) {
-                    kotlin.io.println("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
-                } else {
-                    kotlin.io.print("\t\t\t\t\t\t\t\t\t\t\t\t\t[$line]")
-                }
-            }
-        }
-    }
-
-    fun println(sb: StringBuilder) = println(sb.toString())
-    fun print(sb: StringBuilder) = print(sb.toString())
+    fun println(sb: StringBuilder, messageType: DebugMessageType = DebugMessageType.DEFAULT) =
+        println(sb.toString(), messageType)
 
     fun init() {
         addRandomItemsToRandomRooms()
@@ -92,9 +80,4 @@ object Debug {
         EntitySituation.entries.forEach { situation ->
             player.sendToMe("$situation: ${entity.isInSituation(situation)}")
         }
-
-    val debugActionsExcludedFromPrint =
-        arrayOf(
-            EntityAction.IDLE,
-        )
 }

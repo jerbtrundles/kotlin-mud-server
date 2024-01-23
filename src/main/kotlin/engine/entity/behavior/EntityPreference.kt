@@ -34,6 +34,13 @@ class EntityPreference(
             ),
             EntityAction.HEAL_OTHER
         )
+        val defaultPreferenceCastDamageSpellAtLivingHostile = EntityPreference(
+            listOf(
+                EntitySituation.ANY_LIVING_HOSTILES,
+                EntitySituation.CAN_CAST_DAMAGE_SPELL
+            ),
+            EntityAction.CAST_DAMAGE_SPELL_AT_LIVING_HOSTILE
+        )
         val defaultPreferenceCastFireAtLivingHostile = EntityPreference(
             listOf(
                 EntitySituation.ANY_LIVING_HOSTILES,

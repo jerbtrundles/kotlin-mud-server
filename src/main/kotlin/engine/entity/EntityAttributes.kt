@@ -15,7 +15,7 @@ class EntityAttributes(
     @Json(name = "magic")
     var maximumMagic: Int = 20,
 ) {
-    var currentHealth = max(maximumHealth - 3, 1)
+    var currentHealth = max(maximumHealth - 10, 1)
         set(value) {
             field = if (value > maximumHealth) {
                 maximumHealth
