@@ -88,7 +88,9 @@ class EntityManager(
             job = "healer",
             behavior = EntityBehavior.healer,
             spells = mutableListOf(
-                "minor heal"
+                "minor heal",
+                "minor hurt",
+                "cure poison"
             )
         )
 

@@ -21,10 +21,24 @@
     ]
   },
   {
+    "name": "minor hurt",
+    "cost": 2,
+    "effects": [
+      "NON_ELEMENTAL_DAMAGE TARGET 5"
+    ]
+  },
+  {
     "name": "minor heal",
     "cost": 2,
     "effects": [
       "RESTORE_HEALTH TARGET 5"
+    ]
+  },
+  {
+    "name": "cure poison",
+    "cost": 2,
+    "effects": [
+      "CURE_POISON TARGET 1"
     ]
   }
 ]

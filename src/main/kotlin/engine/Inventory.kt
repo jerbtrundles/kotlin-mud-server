@@ -1,7 +1,9 @@
 package engine
 
 import debug.Debug
+import engine.entity.body.EntityBodyPart
 import engine.item.*
+import engine.item.armor.ItemArmor
 import engine.item.template.ItemTemplate
 import engine.item.template.ItemTemplates
 import engine.utility.Common
@@ -11,11 +13,16 @@ import java.util.*
 class Inventory(
     val items: MutableList<ItemBase> = Collections.synchronizedList(mutableListOf())
 ) {
+    val armor: Sequence<ItemArmor>
+        get() = items.asSequence().filterIsInstance<ItemArmor>()
+
     companion object {
         fun defaultMonster() =
             Inventory()
+
         fun defaultNpc() =
             Inventory()
+
         fun createWithRandomStuff(): Inventory =
             with(Inventory()) {
                 repeat(5) {
@@ -23,7 +30,7 @@ class Inventory(
                     randomChanceAddItemToList(ItemTemplates.food)
                     randomChanceAddItemToList(ItemTemplates.drinks)
                     randomChanceAddItemToList(ItemTemplates.weapons)
-                    randomChanceAddItemToList(ItemTemplates.armor)
+                    randomChanceAddItemToList(ItemTemplates.armorHumanoidChest)
                 }
 
                 return this
@@ -47,6 +54,7 @@ class Inventory(
     // region empty checks
     fun isEmpty() =
         items.isEmpty()
+
     fun isNotEmpty() =
         items.isNotEmpty()
     // endregion
@@ -63,8 +71,10 @@ class Inventory(
     // region add/remove
     fun addInventory(other: Inventory) =
         items.addAll(other.items)
+
     fun addItem(item: ItemBase) =
         items.add(item)
+
     private fun randomChanceAddItemToList(templates: List<ItemTemplate>, percentChance: Int = 20) =
         d100(percentChance) {
             templates.randomOrNull()?.let { items.add(it.createItem()) }
@@ -103,14 +113,17 @@ class Inventory(
             .filterIsInstance<ItemWeapon>()
             .maxByOrNull { if (it.power > minPower) it.power else Int.MIN_VALUE }
 
-    fun getBestArmorOrNull(minDefense: Int = 0) =
-        items.asSequence()
-            .filterIsInstance<ItemArmor>()
-            .maxByOrNull {
-                if (it.defense > minDefense) {
-                    it.defense
+    fun getAndRemoveBetterArmorOrNull(bodyPart: EntityBodyPart) =
+        // filter by slot
+        armor.filter { it.slot == bodyPart.slot }
+            // get item with highest defense
+            .maxByOrNull { it.defense }?.let { bestArmor ->
+                // compare to equipped
+                if (bestArmor.defense > (bodyPart.equippedItem?.defense ?: 0)) {
+                    items.remove(bestArmor)
+                    bestArmor
                 } else {
-                    Int.MIN_VALUE
+                    null
                 }
             }
     // endregion
@@ -187,35 +200,28 @@ class Inventory(
     fun getAndRemoveRandomWeaponOrNull() =
         getAndRemoveRandomTypedItemOrNull<ItemWeapon>()
 
-    fun getAndRemoveRandomArmorOrNull() =
-        getAndRemoveRandomTypedItemOrNull<ItemArmor>()
+    fun getAndRemoveRandomArmorOrNull(bodyPart: EntityBodyPart) =
+        armor.filter { it.slot == bodyPart.slot }
+            .toList()
+            .randomOrNull()
+            ?.let { randomArmor ->
+                items.remove(randomArmor)
+                randomArmor
+            }
 
     fun getAndRemoveRandomBetterWeaponOrNull(minRequiredPower: Int) =
-        items.filterIsInstance(ItemWeapon::class.java)
+        items.filterIsInstance<ItemWeapon>()
             .filter { it.power >= minRequiredPower }
             .randomOrNull()?.let {
                 items.remove(it)
                 it
             }
-
-    fun getAndRemoveRandomBetterArmorOrNull(minRequiredDefense: Int) =
-        items.filterIsInstance(ItemArmor::class.java)
-            .filter { it.defense >= minRequiredDefense }
-            .randomOrNull()?.let {
-                items.remove(it)
-                it
-            }
-
-    fun getAndRemoveBestWeaponOrNull(minPower: Int = 0) =
-        getBestWeaponOrNull(minPower)?.let {
-            items.remove(it)
-            it
-        }
-
-    fun getAndRemoveBestArmorOrNull(minDefense: Int = 0) =
-        getBestArmorOrNull(minDefense)?.let {
-            items.remove(it)
-            it
-        }
     // endregion
+
+    fun containsBetterArmor(bodyPart: EntityBodyPart) =
+        armor.filter { it.slot == bodyPart.slot }
+            .maxByOrNull { it.defense }
+            ?.let { bestArmor ->
+                bestArmor.defense > (bodyPart.equippedItem?.defense ?: 0)
+            } ?: false
 }

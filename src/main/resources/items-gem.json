@@ -8,9 +8,65 @@
   },
   {
     "name": "diamond",
-    "description": "A sparkling diamond. It's worth a lot",
+    "description": "A sparkling diamond. It's worth a lot.",
     "weight": 0.1,
     "value": 500,
     "keywords": ["diamond"]
+  },
+  {
+    "name": "emerald",
+    "description": "A lustrous emerald with a deep green hue.",
+    "weight": 0.1,
+    "value": 300,
+    "keywords": ["emerald"]
+  },
+  {
+    "name": "sapphire",
+    "description": "A stunning sapphire, blue as the deepest ocean.",
+    "weight": 0.1,
+    "value": 275,
+    "keywords": ["sapphire"]
+  },
+  {
+    "name": "opal",
+    "description": "An opal, shimmering with a rainbow of colors.",
+    "weight": 0.1,
+    "value": 150,
+    "keywords": ["opal"]
+  },
+  {
+    "name": "amethyst",
+    "description": "A captivating amethyst with a royal purple shade.",
+    "weight": 0.1,
+    "value": 100,
+    "keywords": ["amethyst"]
+  },
+  {
+    "name": "topaz",
+    "description": "A golden topaz, glinting with sunlight.",
+    "weight": 0.1,
+    "value": 120,
+    "keywords": ["topaz"]
+  },
+  {
+    "name": "pearl",
+    "description": "A smooth pearl, white and luminous.",
+    "weight": 0.1,
+    "value": 200,
+    "keywords": ["pearl"]
+  },
+  {
+    "name": "garnet",
+    "description": "A deep red garnet, fiery and intense.",
+    "weight": 0.1,
+    "value": 90,
+    "keywords": ["garnet"]
+  },
+  {
+    "name": "aquamarine",
+    "description": "An aquamarine, clear and serene like the sea.",
+    "weight": 0.1,
+    "value": 180,
+    "keywords": ["aquamarine"]
   }
 ]

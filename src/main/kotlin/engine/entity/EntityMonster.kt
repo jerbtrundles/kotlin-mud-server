@@ -4,7 +4,7 @@ import GameStats
 import debug.Debug
 import engine.Inventory
 import engine.entity.behavior.EntityBehavior
-import engine.item.ItemArmor
+import engine.entity.body.EntityBody
 import engine.item.ItemWeapon
 import engine.utility.withIndefiniteArticle
 
@@ -17,10 +17,10 @@ class EntityMonster(
     gold: Int,
     behavior: EntityBehavior = EntityBehavior.defaultMonster,
     weapon: ItemWeapon? = null,
-    armor: ItemArmor? = null,
     namePrefix: String = "The ",
     arriveStringSuffix: String = "has arrived",
-    inventory: Inventory = Inventory.defaultMonster()
+    inventory: Inventory = Inventory.defaultMonster(),
+    body: EntityBody = EntityBody.critter()
 ) : EntityBase(
     faction = EntityFaction.factionMonster,
     name = monsterName,
@@ -29,14 +29,14 @@ class EntityMonster(
     attributes = attributes,
     behavior = behavior,
     weapon = weapon,
-    armor = armor,
     namePrefix = namePrefix,
     experience = experience,
     gold = gold,
     actionDelayMin = Debug.monsterDelayMin,
     actionDelayMax = Debug.monsterDelayMax,
     arriveStringSuffix = arriveStringSuffix,
-    inventory = inventory
+    inventory = inventory,
+    body = body
 ) {
     override val canTravelBetweenRegions = false
 

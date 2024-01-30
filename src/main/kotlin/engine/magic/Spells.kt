@@ -4,15 +4,6 @@ import debug.Debug
 import engine.utility.Common
 
 object Spells {
-//    "name": "minor fire",
-//    "cost": 5,
-//    "effects": [
-//    "FIRE_DAMAGE 5-10"
-//    ],
-//    "attack-strings": [
-//    "Flames leap from your fingers, burning the !target for !damage damage."
-//    ]
-
     private lateinit var spellMap: Map<String, Spell>
 
     operator fun get(spellName: String) = spellMap[spellName]!!

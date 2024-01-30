@@ -1,0 +1,56 @@
+[
+  {
+    "name": "leather bracers",
+    "description": "Sturdy bracers made from hardened leather, providing good arm protection.",
+    "weight": 2.0,
+    "value": 8,
+    "defense": 6,
+    "keywords": ["bracers"],
+    "slot": "HUMANOID_ARMS"
+  },
+  {
+    "name": "chain mail sleeves",
+    "description": "Flexible sleeves made of linked metal chains, offering balanced protection.",
+    "weight": 4.0,
+    "value": 15,
+    "defense": 10,
+    "keywords": ["sleeves"],
+    "slot": "HUMANOID_ARMS"
+  },
+  {
+    "name": "elven armguards",
+    "description": "Elegantly crafted armguards, light and strong, imbued with elven magic.",
+    "weight": 1.5,
+    "value": 20,
+    "defense": 8,
+    "keywords": ["armguards"],
+    "slot": "HUMANOID_ARMS"
+  },
+  {
+    "name": "wizard cuffs",
+    "description": "Mystical cuffs that protect the arms while amplifying spell power.",
+    "weight": 1.0,
+    "value": 25,
+    "defense": 4,
+    "keywords": ["cuffs"],
+    "slot": "HUMANOID_ARMS"
+  },
+  {
+    "name": "steel vambraces",
+    "description": "Robust vambraces forged from steel, ideal for frontline combat.",
+    "weight": 5.0,
+    "value": 30,
+    "defense": 15,
+    "keywords": ["vambraces"],
+    "slot": "HUMANOID_ARMS"
+  },
+  {
+    "name": "assassin armlets",
+    "description": "Sleek armlets designed for stealth and agility, favored by assassins.",
+    "weight": 2.0,
+    "value": 12,
+    "defense": 5,
+    "keywords": ["armlets"],
+    "slot": "HUMANOID_ARMS"
+  }
+]

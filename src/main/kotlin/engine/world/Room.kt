@@ -3,6 +3,7 @@ package engine.world
 import engine.*
 import engine.entity.*
 import engine.entity.behavior.EntitySituation
+import engine.entity.body.EntityBodyPart
 import engine.utility.Common
 import engine.player.Player
 import engine.game.GameInput
@@ -254,26 +255,25 @@ open class Room(
             it
         }
 
-    fun getAndRemoveRandomArmorOrNull() =
-        inventory.getAndRemoveRandomArmorOrNull()?.let {
+    fun getAndRemoveRandomArmorOrNull(bodyPart: EntityBodyPart) =
+        inventory.getAndRemoveRandomArmorOrNull(bodyPart)?.let {
             sendItemListToPlayers()
             it
         }
 
-    fun getAndRemoveRandomBetterArmorOrNull(minRequiredDefense: Int) =
-        inventory.getAndRemoveRandomBetterArmorOrNull(minRequiredDefense)?.let {
+    fun getAndRemoveBetterArmorOrNull(bodyPart: EntityBodyPart) =
+        inventory.getAndRemoveBetterArmorOrNull(bodyPart)?.let { betterArmor ->
             sendItemListToPlayers()
-            it
+            betterArmor
         }
 
     fun getAndRemoveRandomItemOrNull() =
-        inventory.getAndRemoveRandomItem()?.let {
+        inventory.getAndRemoveRandomItem()?.let { randomItem ->
             sendItemListToPlayers()
-            it
+            randomItem
         }
 
     fun getBestWeaponOrNull() = inventory.getBestWeaponOrNull()
-    fun getBestArmorOrNull() = inventory.getBestArmorOrNull()
     fun getRandomFoodOrNull() = inventory.getRandomFoodOrNull()
     fun getRandomDrinkOrNull() = inventory.getRandomDrinkOrNull()
     fun getAndRemoveRandomBetterWeaponOrNull(minRequiredPower: Int) =
@@ -293,6 +293,9 @@ open class Room(
     fun getRandomInjuredFriendlyOrNull(friend: EntityBase) =
         npcs.firstOrNull { !it.isHostileTo(friend) && it.isInSituation(EntitySituation.INJURED_MINOR) }
             ?: monsters.firstOrNull { !it.isHostileTo(friend) && it.isInSituation(EntitySituation.INJURED_MINOR) }
+
+    fun containsBetterArmor(bodyPart: EntityBodyPart) =
+        inventory.containsBetterArmor(bodyPart)
 }
 
 // find an item, item comes with fluff text, maybe a story

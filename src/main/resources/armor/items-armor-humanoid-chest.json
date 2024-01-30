@@ -1,0 +1,83 @@
+[
+  {
+    "name": "leather armor",
+    "description": "It's some leather armor.",
+    "weight": 4.0,
+    "value": 15,
+    "defense": 10,
+    "keywords": ["armor"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "half plate",
+    "description": "It's some half plate.",
+    "weight": 40.0,
+    "value": 30,
+    "defense": 20,
+    "keywords": ["plate"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "chain mail",
+    "description": "A suit of interlocking metal rings, offering balanced protection.",
+    "weight": 25.0,
+    "value": 50,
+    "defense": 30,
+    "keywords": ["mail"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "scale mail",
+    "description": "Overlapping metal scales, providing robust defense.",
+    "weight": 35.0,
+    "value": 40,
+    "defense": 25,
+    "keywords": ["mail"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "studded leather",
+    "description": "Leather armor reinforced with metal studs.",
+    "weight": 6.0,
+    "value": 25,
+    "defense": 15,
+    "keywords": ["leather"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "padded armor",
+    "description": "Thick, padded cloth, suitable for stealth.",
+    "weight": 3.0,
+    "value": 10,
+    "defense": 8,
+    "keywords": ["armor"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "splint armor",
+    "description": "Metal strips on a fabric backing, a balance between mobility and protection.",
+    "weight": 45.0,
+    "value": 60,
+    "defense": 35,
+    "keywords": ["armor"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "ring mail",
+    "description": "Armor made of small metal rings sewn onto a leather backing.",
+    "weight": 30.0,
+    "value": 35,
+    "defense": 22,
+    "keywords": ["mail"],
+    "slot": "HUMANOID_CHEST"
+  },
+  {
+    "name": "brigandine",
+    "description": "A garment lined with small steel plates, concealed for subtlety.",
+    "weight": 28.0,
+    "value": 45,
+    "defense": 27,
+    "keywords": ["brigandine"],
+    "slot": "HUMANOID_CHEST"
+  }
+]

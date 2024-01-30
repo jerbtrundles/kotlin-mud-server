@@ -1,0 +1,56 @@
+[
+  {
+    "name": "iron helmet",
+    "description": "A sturdy iron helmet offering good protection.",
+    "weight": 5.0,
+    "value": 20,
+    "defense": 12,
+    "keywords": ["helmet"],
+    "slot": "HUMANOID_HEAD"
+  },
+  {
+    "name": "wizard hat",
+    "description": "A tall, pointed hat imbued with arcane energies.",
+    "weight": 1.0,
+    "value": 25,
+    "defense": 5,
+    "keywords": ["hat"],
+    "slot": "HUMANOID_HEAD"
+  },
+  {
+    "name": "leather hood",
+    "description": "A soft hood made from tanned leather, favored by scouts.",
+    "weight": 2.0,
+    "value": 10,
+    "defense": 7,
+    "keywords": ["hood"],
+    "slot": "HUMANOID_HEAD"
+  },
+  {
+    "name": "steel great helm",
+    "description": "A heavy, full-face helm offering maximum protection.",
+    "weight": 8.0,
+    "value": 35,
+    "defense": 18,
+    "keywords": ["helm"],
+    "slot": "HUMANOID_HEAD"
+  },
+  {
+    "name": "crown of wisdom",
+    "description": "A mystical crown said to enhance the wisdom of its wearer.",
+    "weight": 3.0,
+    "value": 40,
+    "defense": 8,
+    "keywords": ["crown"],
+    "slot": "HUMANOID_HEAD"
+  },
+  {
+    "name": "ranger cap",
+    "description": "A lightweight cap ideal for long journeys through the forest.",
+    "weight": 1.5,
+    "value": 15,
+    "defense": 6,
+    "keywords": ["cap"],
+    "slot": "HUMANOID_HEAD"
+  }
+]

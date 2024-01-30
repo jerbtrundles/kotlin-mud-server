@@ -1,0 +1,47 @@
+[
+  {
+    "name": "leather trousers",
+    "description": "Durable trousers made from toughened leather, offering flexibility and protection.",
+    "weight": 3.0,
+    "value": 10,
+    "defense": 6,
+    "keywords": ["trousers"],
+    "slot": "HUMANOID_LEGS"
+  },
+  {
+    "name": "chain mail leggings",
+    "description": "Protective leggings made of interlinked metal rings, balancing mobility and defense.",
+    "weight": 5.0,
+    "value": 18,
+    "defense": 12,
+    "keywords": ["leggings"],
+    "slot": "HUMANOID_LEGS"
+  },
+  {
+    "name": "elven greaves",
+    "description": "Light and durable greaves, crafted with elven skill to offer both protection and agility.",
+    "weight": 2.5,
+    "value": 22,
+    "defense": 8,
+    "keywords": ["greaves"],
+    "slot": "HUMANOID_LEGS"
+  },
+  {
+    "name": "steel cuisses",
+    "description": "Heavy steel armor for the upper legs, offering exceptional protection in combat.",
+    "weight": 6.0,
+    "value": 35,
+    "defense": 16,
+    "keywords": ["cuisses"],
+    "slot": "HUMANOID_LEGS"
+  },
+  {
+    "name": "ranger leggings",
+    "description": "Specially designed leggings for rangers, ideal for long treks and stealth.",
+    "weight": 3.5,
+    "value": 15,
+    "defense": 7,
+    "keywords": ["leggings"],
+    "slot": "HUMANOID_LEGS"
+  }
+]

@@ -15,6 +15,8 @@ enum class Message {
     ENTITY_DRINKS_DRINK_FROM_INVENTORY,
     ENTITY_DRINKS_DRINK_ON_GROUND,
     ENTITY_DROPS_ITEM,
+    ENTITY_UNEQUIPS_AND_DROPS_ITEM,
+    ENTITY_PICKS_UP_AND_EQUIPS_ITEM,
     ENTITY_EATS_FOOD_FROM_INVENTORY,
     ENTITY_EATS_FOOD_ON_GROUND,
     ENTITY_EQUIPS_ITEM,
@@ -34,7 +36,8 @@ enum class Message {
     ENTITY_SAYS_TO_ENTITY,
     ENTITY_SEARCHES_DEAD_ENTITY,
     ENTITY_SITS,
-    ENTITY_ATTACKS_ENTITY,
+    ENTITY_ATTACKS_ENTITY_WEAPON,
+    ENTITY_ATTACKS_ENTITY_NO_WEAPON,
     ENTITY_HITS_FOR_DAMAGE,
     ENTITY_MISSES,
     ENTITY_SPEAKS_WITH_ENTITY,
@@ -147,7 +150,8 @@ object Messages {
             Message.ENTITY_PUTS_AWAY_ITEM -> "%1 puts away their %2."
             Message.ENTITY_REMOVES_ITEM -> "%1 removes their %2."
             Message.ENTITY_SAYS -> "%1 says, \"%2\""
-            Message.ENTITY_ATTACKS_ENTITY -> "%1 swings at %2 with their %3."
+            Message.ENTITY_ATTACKS_ENTITY_NO_WEAPON -> "%1 attacks %2."
+            Message.ENTITY_ATTACKS_ENTITY_WEAPON -> "%1 attacks %2 with their %3."
             Message.ENTITY_SAYS_TO_ENTITY -> "%1 says to %2, \"%3\""
             Message.ENTITY_SEARCHES_DEAD_ENTITY -> "%1 searches the corpse of %2."
             Message.ENTITY_SITS -> "%1 sits down."
@@ -238,6 +242,8 @@ object Messages {
             Message.ENTITY_CASTS_SPELL -> "%1 casts %2."
             Message.ENTITY_CASTS_SPELL_ON_SELF -> "%1 casts %2 on themselves."
             Message.FIREBALL_HURTLES_AT_ENTITY -> "A ball of flame hurtles toward %1, dealing %2 damage."
+            Message.ENTITY_UNEQUIPS_AND_DROPS_ITEM -> "%1 unequips and drops %2."
+            Message.ENTITY_PICKS_UP_AND_EQUIPS_ITEM -> "%1 picks up and equips %2."
 
             else -> throw(Exception("error: invalid string"))
         }

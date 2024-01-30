@@ -1,0 +1,56 @@
+[
+  {
+    "name": "leather gloves",
+    "description": "Sturdy gloves made from quality leather, offering good dexterity.",
+    "weight": 1.0,
+    "value": 8,
+    "defense": 5,
+    "keywords": ["gloves"],
+    "slot": "HUMANOID_HANDS"
+  },
+  {
+    "name": "chain mail gauntlets",
+    "description": "Gauntlets made of interlocking metal rings, providing solid protection.",
+    "weight": 3.0,
+    "value": 15,
+    "defense": 10,
+    "keywords": ["gauntlets"],
+    "slot": "HUMANOID_HANDS"
+  },
+  {
+    "name": "elven gloves",
+    "description": "Elegantly crafted gloves from the elves, light yet durable.",
+    "weight": 2.0,
+    "value": 20,
+    "defense": 7,
+    "keywords": ["gloves"],
+    "slot": "HUMANOID_HANDS"
+  },
+  {
+    "name": "wizard gloves",
+    "description": "Enchanted gloves that enhance spellcasting abilities.",
+    "weight": 1.5,
+    "value": 25,
+    "defense": 4,
+    "keywords": ["gloves"],
+    "slot": "HUMANOID_HANDS"
+  },
+  {
+    "name": "steel gauntlets",
+    "description": "Heavy gauntlets made of steel, offering high protection for warriors.",
+    "weight": 4.0,
+    "value": 30,
+    "defense": 15,
+    "keywords": ["gauntlets"],
+    "slot": "HUMANOID_HANDS"
+  },
+  {
+    "name": "thief's gloves",
+    "description": "Light and tight-fitting gloves, perfect for nimble fingers.",
+    "weight": 0.5,
+    "value": 12,
+    "defense": 3,
+    "keywords": ["gloves"],
+    "slot": "HUMANOID_HANDS"
+  }
+]

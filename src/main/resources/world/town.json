@@ -1,10 +1,10 @@
 {
   "id": "town",
   "region-name": "The Town",
-  "max-npcs": 1,
+  "max-npcs": 20,
   "max-healers": 5,
   "max-wizards": 10,
-  "max-monsters": 5,
+  "max-monsters": 0,
   "monsters": [
     "goblin"
   ],
@@ -14,9 +14,8 @@
       "rooms": [
         {
           "coordinates": "town, 0, 0",
-          "description": "This is the northwest room. The town gates here lead to the forest.",
+          "description": "This is the northwest room.",
           "connections": [
-            "forest, 0, 0 - go gates",
             "town, 0, 1 - go east",
             "town, 0, 3 - go south",
             "town, 0, 4 - go southeast"
@@ -24,11 +23,12 @@
         },
         {
           "coordinates": "town, 0, 1",
-          "description": "This is the north room.",
+          "description": "This is the north room.  The town gates here lead to the forest.",
           "connections": [
             "town, 0, 0 - go west",
             "town, 0, 2 - go east",
-            "town, 0, 4 - go south"
+            "town, 0, 4 - go south",
+            "forest, 0, 7 - go gates"
           ]
         },
         {
@@ -67,11 +67,12 @@
         },
         {
           "coordinates": "town, 0, 5",
-          "description": "This is the east room.",
+          "description": "This is the east room. The town gates here lead to the desert.",
           "connections": [
             "town, 0, 2 - go north",
             "town, 0, 4 - go west",
-            "town, 0, 8 - go south"
+            "town, 0, 8 - go south",
+            "desert, 0, 3 - go gates"
           ]
         },
         {

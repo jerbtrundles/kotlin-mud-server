@@ -10,7 +10,8 @@ enum class DebugMessageType {
     ENTITY_ATTACK,
     ENTITY_GET_VALUABLE_ITEM,
     ENTITY_FIND_WEAPON,
-    ENTITY_FIND_ARMOR;
+    ENTITY_FIND_ARMOR,
+    ECHO_MESSAGE;
 
     companion object {
         fun enabled(messageType: DebugMessageType) =
@@ -18,13 +19,14 @@ enum class DebugMessageType {
                 DEFAULT -> true
                 ENTITY_PASSIVE_EFFECT -> false
                 ENTITY_CHECK_FOR_MAGIC_EFFECT -> false
-                ENTITY_CAST_SPELL -> true
+                ENTITY_CAST_SPELL -> false
                 ENTITY_ADD_TO_ROOM -> false
-                ENTITY_ATTACK -> true
+                ENTITY_ATTACK -> false
                 ENTITY_SEARCH -> false
-                ENTITY_FIND_WEAPON -> false
-                ENTITY_FIND_ARMOR -> false
+                ENTITY_FIND_WEAPON -> true
+                ENTITY_FIND_ARMOR -> true
                 ENTITY_GET_VALUABLE_ITEM -> false
+                ECHO_MESSAGE -> false
                 else -> false
             }
     }

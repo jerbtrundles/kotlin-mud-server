@@ -5,9 +5,8 @@ import engine.Inventory
 import engine.Message
 import engine.Messages
 import engine.entity.behavior.EntityBehavior
-import engine.item.ItemArmor
+import engine.entity.body.EntityBody
 import engine.item.ItemWeapon
-import engine.magic.Spell
 
 class EntityFriendlyNpc(
     name: String,
@@ -16,13 +15,13 @@ class EntityFriendlyNpc(
     behavior: EntityBehavior,
     experience: Int = 0,
     gold: Int = 0,
+    body: EntityBody = EntityBody.humanoid(),
     arriveStringSuffix: String = "walks in",
     delayMin: Int = Debug.npcDelayMin,
     delayMax: Int = Debug.npcDelayMax,
     attributes: EntityAttributes = EntityAttributes.defaultNpc,
     inventory: Inventory = Inventory.defaultNpc(),
     weapon: ItemWeapon? = null,
-    armor: ItemArmor? = null,
     spells: MutableList<String> = mutableListOf(),
     override val canTravelBetweenRegions: Boolean = true
 ) : EntityBase(
@@ -40,8 +39,8 @@ class EntityFriendlyNpc(
     arriveStringSuffix = arriveStringSuffix,
     inventory = inventory,
     weapon = weapon,
-    armor = armor,
-    spells = spells
+    spells = spells,
+    body = body
 ) {
     // region names
     override val nameWithJob = "$name the $job"

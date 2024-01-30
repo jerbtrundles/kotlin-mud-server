@@ -1,47 +1,104 @@
 {
   "id": "forest",
   "region-name": "The Forest",
+  "max-npcs": 0,
+  "max-healers": 0,
+  "max-wizards": 0,
+  "max-monsters": 10,
   "monsters": [
     "goblin",
     "treasure goblin"
   ],
-  "max-monsters": 5,
   "subregions": [
     {
       "subregion-name": "Entrance",
       "rooms": [
         {
           "coordinates": "forest, 0, 0",
-          "description": "This is the forest.",
+          "description": "This is the northwest room.",
           "connections": [
-            "town, 0, 0 - go gates",
-            "forest, 0, 1 - go northwest",
-            "forest, 0, 3 - go northeast"
+            "forest, 0, 1 - go east",
+            "forest, 0, 3 - go south",
+            "forest, 0, 4 - go southeast"
           ]
         },
         {
           "coordinates": "forest, 0, 1",
-          "description": "This is the forest.",
+          "description": "This is the north room. There's an orc burrow here.",
           "connections": [
-            "forest, 0, 0 - go southeast",
-            "forest, 0, 2 - go northeast"
+            "forest, 0, 0 - go west",
+            "forest, 0, 2 - go east",
+            "forest, 0, 4 - go south",
+            "burrow, 0, 0 - go burrow"
           ]
         },
         {
           "coordinates": "forest, 0, 2",
-          "description": "This is the forest. You also see an opening that leads to an orc burrow.",
+          "description": "This is the northeast room.",
           "connections": [
-            "forest, 0, 1 - go southwest",
-            "forest, 0, 3 - go southeast",
-            "burrow, 0, 0 - go opening"
+            "forest, 0, 1 - go west",
+            "forest, 0, 4 - go southwest",
+            "forest, 0, 5 - go south"
           ]
         },
         {
           "coordinates": "forest, 0, 3",
-          "description": "This is the forest.",
+          "description": "This is the west room. The town gates are here.",
           "connections": [
-            "forest, 0, 2 - go northwest",
-            "forest, 0, 0 - go southwest"
+            "forest, 0, 0 - go north",
+            "forest, 0, 4 - go east",
+            "forest, 0, 6 - go south"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 4",
+          "description": "This is the central room.",
+          "connections": [
+            "forest, 0, 0 - go northwest",
+            "forest, 0, 1 - go north",
+            "forest, 0, 2 - go northeast",
+            "forest, 0, 3 - go west",
+            "forest, 0, 5 - go east",
+            "forest, 0, 6 - go southwest",
+            "forest, 0, 7 - go south",
+            "forest, 0, 8 - go southeast"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 5",
+          "description": "This is the east room.",
+          "connections": [
+            "forest, 0, 2 - go north",
+            "forest, 0, 4 - go west",
+            "forest, 0, 8 - go south"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 6",
+          "description": "This is the southwest room.",
+          "connections": [
+            "forest, 0, 3 - go north",
+            "forest, 0, 4 - go northeast",
+            "forest, 0, 7 - go east"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 7",
+          "description": "This is the south room. The town gates are here.",
+          "connections": [
+            "forest, 0, 4 - go north",
+            "forest, 0, 6 - go west",
+            "forest, 0, 8 - go east",
+            "town, 0, 1 - go gates"
+          ]
+        },
+        {
+          "coordinates": "forest, 0, 8",
+          "description": "This is the southeast room.",
+          "connections": [
+            "forest, 0, 4 - go northwest",
+            "forest, 0, 5 - go north",
+            "forest, 0, 7 - go west"
           ]
         }
       ]

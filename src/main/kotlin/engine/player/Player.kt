@@ -7,10 +7,12 @@ import engine.Messages
 import engine.entity.EntityAttributes
 import engine.entity.EntityFaction
 import engine.entity.EntityPosture
+import engine.entity.body.EntityBody
 import engine.game.Game
 import engine.game.GameInput
 import engine.game.MovementDirection
 import engine.item.*
+import engine.item.armor.ItemArmor
 import engine.utility.appendLine
 import engine.world.*
 import io.ktor.websocket.*
@@ -29,7 +31,7 @@ class Player(
     var posture = EntityPosture.STANDING
     val inventory: Inventory = Inventory()
     var weapon: ItemWeapon? = null
-    var armor: ItemArmor? = null
+    val body: EntityBody = EntityBody.humanoid()
 
     val faction = EntityFaction.factionPlayer
 
@@ -337,99 +339,109 @@ class Player(
                 appendLine(Message.PLAYER_SHOW_EQUIPPED_ITEM, it.nameWithIndefiniteArticle)
             } ?: appendLine(Message.PLAYER_NO_WEAPON_EQUIPPED)
 
-            armor?.let {
-                appendLine(Message.PLAYER_SHOW_EQUIPPED_ITEM, it.nameWithIndefiniteArticle)
-            } ?: appendLine(Message.PLAYER_NO_ARMOR_EQUIPPED)
+            var anyArmorEquipped = false
+            body.parts.forEach { part ->
+                part.equippedItem?.let { armor ->
+                    anyArmorEquipped = true
+                    appendLine(Message.PLAYER_SHOW_EQUIPPED_ITEM, armor.nameWithIndefiniteArticle)
+                }
+            }
+
+            if (!anyArmorEquipped) {
+                appendLine(Message.PLAYER_NO_ARMOR_EQUIPPED)
+            }
 
             sendToMe(this)
         }
 
-    private fun doRemoveEquipment(gameInput: GameInput) =
-        if (weapon != null && weapon!!.keywords.contains(gameInput.words[1])) {
+    private fun doRemoveEquipment(gameInput: GameInput) {
+        val keyword = gameInput.words[1]
+
+        if (weapon != null && weapon!!.keywords.contains(keyword)) {
             val weaponToRemove = weapon!!
             inventory.items.add(weaponToRemove)
             weapon = null
             sendToMe(Message.PLAYER_REMOVES_ITEM, weaponToRemove.name)
-        } else if (armor != null && armor!!.keywords.contains(gameInput.words[1])) {
-            val armorToRemove = armor!!
-            inventory.items.add(armorToRemove)
-            armor = null
-            sendToMe(Message.PLAYER_REMOVES_ITEM, armorToRemove.name)
         } else {
-            doUnknown()
+            body.parts.firstOrNull { bodyPart ->
+                bodyPart.equippedItem?.keywords?.contains(keyword) ?: false
+            }?.let { bodyPart ->
+                val armorToRemove = bodyPart.equippedItem!!
+                inventory.items.add(armorToRemove)
+                bodyPart.equippedItem = null
+                sendToMe(Message.PLAYER_REMOVES_ITEM, armorToRemove.name)
+            } ?: doUnknown()
         }
+    }
 
     private fun doEquipItem(gameInput: GameInput) =
         // find weapon from player inventory
-        inventory.getAndRemoveWeaponWithKeywordOrNull(gameInput.words[1])?.let {
-            doEquipWeaponFromPlayerInventory(it)
+        inventory.getAndRemoveWeaponWithKeywordOrNull(gameInput.words[1])?.let { weapon ->
+            doEquipWeapon(weapon, ItemSource.INVENTORY)
             // find weapon from current room
-        } ?: currentRoom.getAndRemoveWeaponWithKeywordOrNull(gameInput.words[1])?.let {
-            doEquipWeaponFromCurrentRoom(it)
+        } ?: currentRoom.getAndRemoveWeaponWithKeywordOrNull(gameInput.words[1])?.let { weapon ->
+            doEquipWeapon(weapon, ItemSource.CURRENT_ROOM)
             // find armor from player inventory
-        } ?: inventory.getAndRemoveArmorWithKeywordOrNull(gameInput.words[1])?.let {
-            doEquipArmorFromPlayerInventory(it)
+        } ?: inventory.getAndRemoveArmorWithKeywordOrNull(gameInput.words[1])?.let { armorFromInventory ->
+            doEquipArmor(armorFromInventory, ItemSource.INVENTORY)
             // find armor from current room
-        } ?: currentRoom.getAndRemoveArmorWithKeywordOrNull(gameInput.words[1])?.let {
-            doEquipArmorFromCurrentRoom(it)
+        } ?: currentRoom.getAndRemoveArmorWithKeywordOrNull(gameInput.words[1])?.let { armorFromCurrentRoom ->
+            doEquipArmor(armorFromCurrentRoom, ItemSource.CURRENT_ROOM)
         } ?: doUnknown()
 
-    private fun doEquipWeaponFromCurrentRoom(weaponFromCurrentRoom: ItemWeapon) {
+    private fun doEquipWeapon(newWeapon: ItemWeapon, source: ItemSource) =
         weapon?.let { alreadyEquippedWeapon ->
             sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
         } ?: {
-            weapon = weaponFromCurrentRoom
-            currentRoom.removeItem(weaponFromCurrentRoom)
+            weapon = newWeapon
+            inventory.items.remove(newWeapon)
 
-            sendToMe(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, weaponFromCurrentRoom.name)
-            sendToOthers(Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM, name, weaponFromCurrentRoom.name)
+            val meMessage =
+                when (source) {
+                    ItemSource.CURRENT_ROOM -> Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM
+                    ItemSource.INVENTORY -> Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY
+                }
+            val othersMessage =
+                when (source) {
+                    ItemSource.CURRENT_ROOM -> Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM
+                    ItemSource.INVENTORY -> Message.OTHER_PLAYER_EQUIPS_ITEM_FROM_INVENTORY
+                }
+            sendToMe(meMessage, newWeapon.nameWithIndefiniteArticle)
+            sendToOthers(othersMessage, name, newWeapon.nameWithIndefiniteArticle)
         }
-    }
 
-    private fun doEquipArmorFromCurrentRoom(armorFromCurrentRoom: ItemArmor) {
-        armor?.let { alreadyEquippedArmor ->
-            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
-        } ?: {
-            armor = armorFromCurrentRoom
-            currentRoom.removeItem(armorFromCurrentRoom)
+    private fun doEquipArmor(armor: ItemArmor, source: ItemSource) =
+        // find a matching body part
+        body.parts.firstOrNull { bodyPart ->
+            bodyPart.slot == armor.slot
+        }?.let { bodyPart ->
+            // do we have something equipped already?
+            bodyPart.equippedItem?.let { alreadyEquippedArmor ->
+                sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
+            } ?: {
+                // equip the item and remove from room
+                bodyPart.equippedItem = armor
+                currentRoom.removeItem(armor)
 
-            sendToMe(Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM, armorFromCurrentRoom.name)
-            sendToOthers(Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM, name, armorFromCurrentRoom.name)
+                val meMessage =
+                    when (source) {
+                        ItemSource.CURRENT_ROOM -> Message.PLAYER_PICKS_UP_AND_EQUIPS_ITEM
+                        ItemSource.INVENTORY -> Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM
+                    }
+
+                val othersMessage =
+                    when (source) {
+                        ItemSource.CURRENT_ROOM -> Message.OTHER_PLAYER_PICKS_UP_AND_EQUIPS_ITEM
+                        ItemSource.INVENTORY -> Message.OTHER_PLAYER_EQUIPS_ITEM_FROM_INVENTORY
+                    }
+
+                sendToMe(meMessage, armor.name)
+                sendToOthers(othersMessage, name, armor.name)
+            }
         }
-    }
 
-    private fun doEquipWeaponFromPlayerInventory(weaponFromInventory: ItemWeapon) {
-        weapon?.let { alreadyEquippedWeapon ->
-            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedWeapon.nameWithIndefiniteArticle)
-        } ?: {
-            weapon = weaponFromInventory
-            inventory.items.remove(weaponFromInventory)
 
-            sendToMe(Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY, weaponFromInventory.nameWithIndefiniteArticle)
-            sendToOthers(
-                Message.OTHER_PLAYER_EQUIPS_ITEM_FROM_INVENTORY,
-                name,
-                weaponFromInventory.nameWithIndefiniteArticle
-            )
-        }
-    }
-
-    private fun doEquipArmorFromPlayerInventory(armorFromInventory: ItemArmor) {
-        armor?.let { alreadyEquippedArmor ->
-            sendToMe(Message.PLAYER_ITEM_ALREADY_EQUIPPED, alreadyEquippedArmor.nameWithIndefiniteArticle)
-        } ?: {
-            armor = armorFromInventory
-            inventory.items.remove(armorFromInventory)
-
-            sendToMe(Message.PLAYER_EQUIPS_ITEM_FROM_INVENTORY, armorFromInventory.nameWithIndefiniteArticle)
-            sendToMe(
-                Message.OTHER_PLAYER_EQUIPS_ITEM_FROM_INVENTORY,
-                name,
-                armorFromInventory.nameWithIndefiniteArticle
-            )
-        }
-    }
-    // endregion
+// endregion
 
     // region attack/search entities
     private fun doAttack(gameInput: GameInput) {
@@ -501,7 +513,7 @@ class Player(
             sendToMe(toMe.toString())
             sendToOthers(toOthers.toString())
         } ?: doUnknown()
-    // endregion
+// endregion
 
     // region shops
     private fun doSellItem(gameInput: GameInput) =
@@ -559,7 +571,7 @@ class Player(
                 }
             } ?: doUnknown()
         } ?: doRoomIsNotShop()
-    // endregion
+// endregion
 
     private fun doDepositMoney(gameInput: GameInput) =
         (currentRoom as? RoomBank)?.run {

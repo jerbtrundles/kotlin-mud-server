@@ -9,7 +9,17 @@ object ItemTemplates {
     var food = listOf<ItemTemplateFood>()
     var containers = listOf<ItemTemplateContainer>()
     var weapons = listOf<ItemTemplateWeapon>()
-    var armor = listOf<ItemTemplateArmor>()
+    var armorHumanoidHead = listOf<ItemTemplateArmor>()
+    var armorHumanoidChest = listOf<ItemTemplateArmor>()
+    var armorHumanoidArms = listOf<ItemTemplateArmor>()
+    var armorHumanoidLegs = listOf<ItemTemplateArmor>()
+    var armorHumanoidHands = listOf<ItemTemplateArmor>()
+    var armorHumanoidFeet = listOf<ItemTemplateArmor>()
+
+    var armor: List<ItemTemplateArmor> = listOf()
+        get() = armorHumanoidFeet + armorHumanoidArms + armorHumanoidHead +
+                armorHumanoidChest + armorHumanoidHands + armorHumanoidLegs
+
     var gems = listOf<ItemTemplateGem>()
 
     fun load(c: Class<() -> Unit>) {
@@ -23,9 +33,48 @@ object ItemTemplates {
     }
 
     private fun loadArmor(c: Class<() -> Unit>) {
-        Debug.println("Loading armor...")
-        armor = Common.parseArrayFromJson(c, "/items-armor.json")
-        Debug.println("Done loading armor. We can defend ourselves with ${armor.size} different options.")
+        loadArmorHumanoidChest(c)
+        loadArmorHumanoidHead(c)
+        loadArmorHumanoidFeet(c)
+        loadArmorHumanoidHands(c)
+        loadArmorHumanoidArms(c)
+        loadArmorHumanoidLegs(c)
+    }
+
+    private fun loadArmorHumanoidChest(c: Class<() -> Unit>) {
+        Debug.println("Loading humanoid chest armor...")
+        armorHumanoidChest = Common.parseArrayFromJson(c, "/armor/items-armor-humanoid-chest.json")
+        Debug.println("Done loading humanoid chest armor. ${armorHumanoidChest.size}")
+    }
+
+    private fun loadArmorHumanoidHead(c: Class<() -> Unit>) {
+        Debug.println("Loading humanoid head armor...")
+        armorHumanoidHead = Common.parseArrayFromJson(c, "/armor/items-armor-humanoid-head.json")
+        Debug.println("Done loading humanoid head armor. ${armorHumanoidHead.size}")
+    }
+
+    private fun loadArmorHumanoidArms(c: Class<() -> Unit>) {
+        Debug.println("Loading humanoid arms armor...")
+        armorHumanoidArms = Common.parseArrayFromJson(c, "/armor/items-armor-humanoid-arms.json")
+        Debug.println("Done loading humanoid arms armor. ${armorHumanoidArms.size}")
+    }
+
+    private fun loadArmorHumanoidLegs(c: Class<() -> Unit>) {
+        Debug.println("Loading humanoid legs armor...")
+        armorHumanoidLegs = Common.parseArrayFromJson(c, "/armor/items-armor-humanoid-legs.json")
+        Debug.println("Done loading humanoid legs armor. ${armorHumanoidLegs.size}")
+    }
+
+    private fun loadArmorHumanoidHands(c: Class<() -> Unit>) {
+        Debug.println("Loading humanoid hands armor...")
+        armorHumanoidHands = Common.parseArrayFromJson(c, "/armor/items-armor-humanoid-hands.json")
+        Debug.println("Done loading humanoid hands armor. ${armorHumanoidHands.size}")
+    }
+
+    private fun loadArmorHumanoidFeet(c: Class<() -> Unit>) {
+        Debug.println("Loading humanoid feet armor...")
+        armorHumanoidFeet = Common.parseArrayFromJson(c, "/armor/items-armor-humanoid-feet.json")
+        Debug.println("Done loading humanoid feet armor. ${armorHumanoidFeet.size}")
     }
 
     private fun loadWeapons(c: Class<() -> Unit>) {
@@ -66,7 +115,12 @@ object ItemTemplates {
 
     fun find(itemString: String): ItemTemplate {
         return weapons.firstOrNull { template -> template.matches(itemString) }
-            ?: armor.firstOrNull { template -> template.matches(itemString) }
+            ?: armorHumanoidChest.firstOrNull { template -> template.matches(itemString) }
+            ?: armorHumanoidHead.firstOrNull { template -> template.matches(itemString) }
+            ?: armorHumanoidArms.firstOrNull { template -> template.matches(itemString) }
+            ?: armorHumanoidLegs.firstOrNull { template -> template.matches(itemString) }
+            ?: armorHumanoidHands.firstOrNull { template -> template.matches(itemString) }
+            ?: armorHumanoidFeet.firstOrNull { template -> template.matches(itemString) }
             ?: food.firstOrNull { template -> template.matches(itemString) }
             ?: drinks.firstOrNull { template -> template.matches(itemString) }
             ?: junk.firstOrNull { template -> template.matches(itemString) }

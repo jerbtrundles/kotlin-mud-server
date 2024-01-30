@@ -8,11 +8,11 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
         val defaultNpc = EntityBehavior(
             listOf(
                 // EntityPreference.defaultPreferenceQuipLikeABoss,
-                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
-                EntityPreference.defaultPreferenceFindValuableItem,
-                EntityPreference.defaultPreferenceSearchDeadHostile,
-                EntityPreference.defaultPreferenceAttackLivingHostile,
-                EntityPreference.defaultPreferenceFindBetterWeapon,
+//                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+//                EntityPreference.defaultPreferenceFindValuableItem,
+//                EntityPreference.defaultPreferenceSearchDeadHostile,
+//                EntityPreference.defaultPreferenceAttackLivingHostile,
+//                EntityPreference.defaultPreferenceFindBetterWeapon,
                 EntityPreference.defaultPreferenceFindBetterArmor
             )
         )
@@ -34,6 +34,7 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
         val healer = EntityBehavior(
             listOf(
                 EntityPreference.defaultPreferenceHealFriendly,
+                EntityPreference.defaultPreferenceCastDamageSpellAtLivingHostile,
                 EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
                 EntityPreference.defaultPreferenceFindValuableItem,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
@@ -85,27 +86,21 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
 
         private val idleActions = listOf(
             EntityAction.GET_RANDOM_ITEM,
-//            EntityAction.SIT,
-//            EntityAction.KNEEL,
             EntityAction.QUIP_TO_RANDOM_ENTITY,
             EntityAction.IDLE_FLAVOR_ACTION,
             EntityAction.EAT_RANDOM_FOOD,
             EntityAction.DRINK_RANDOM_DRINK
         )
 
-        fun randomIdleAction() = when (Random.nextInt(100)) {
-            in 0..80 -> EntityAction.MOVE
-            else -> idleActions.random()
-        }
+        fun randomIdleAction() =
+            when (Random.nextInt(100)) {
+                in 0..80 -> EntityAction.MOVE
+                else -> idleActions.random()
+            }
     }
 
-    fun getNextAction(entity: EntityBase): EntityAction {
-        val action = preferences.firstOrNull { preference ->
+    fun getNextAction(entity: EntityBase) =
+        preferences.firstOrNull { preference ->
             preference.situations.all { situation -> entity.isInSituation(situation) }
         }?.action ?: EntityAction.IDLE
-
-
-
-        return action
-    }
 }

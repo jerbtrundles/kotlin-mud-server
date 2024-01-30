@@ -34,7 +34,11 @@
       "ruby",
       "diamond",
       "ruby",
-      "diamond"
+      "diamond",
+      "garnet",
+      "aquamarine",
+      "opal",
+      "pearl"
     ]
   },
   {
@@ -309,6 +313,22 @@
     "name": "werewolf",
     "keywords": [],
     "level": 9,
+    "experience": 150,
+    "gold": 75,
+    "attributes": {
+      "strength": 25,
+      "intelligence": 8,
+      "vitality": 20,
+      "speed": 20,
+      "defense": 15,
+      "health": 25,
+      "magic": 0
+    }
+  },
+  {
+    "name": "sand worm",
+    "keywords": ["worm"],
+    "level": 3,
     "experience": 150,
     "gold": 75,
     "attributes": {

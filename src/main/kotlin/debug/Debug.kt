@@ -10,14 +10,14 @@ import kotlin.text.StringBuilder
 
 object Debug {
     const val VALUABLE_ITEM_MINIMUM_VALUE = 50
-    const val npcDelayMin = 4000
-    const val npcDelayMax = 6000
+    const val npcDelayMin = 1000
+    const val npcDelayMax = 2000
     const val monsterDelayMin = 6000
     const val monsterDelayMax = 8000
     const val monsterAttackDebuff = 0
     const val npcAttackBuff = 0
-    private const val initialWeapons = 20
-    private const val initialArmor = 20
+    private const val initialWeapons = 0
+    private const val initialArmor = 100
     private const val initialJunk = 0
     private const val initialGems = 10
     private const val initialFood = 0

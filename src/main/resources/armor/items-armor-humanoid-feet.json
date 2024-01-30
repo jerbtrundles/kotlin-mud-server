@@ -1,0 +1,56 @@
+[
+  {
+    "name": "leather boots",
+    "description": "Durable boots made from tough leather, suitable for long travels.",
+    "weight": 3.0,
+    "value": 12,
+    "defense": 8,
+    "keywords": ["boots"],
+    "slot": "HUMANOID_FEET"
+  },
+  {
+    "name": "elven shoes",
+    "description": "Light and elegant shoes crafted by elven artisans.",
+    "weight": 1.0,
+    "value": 18,
+    "defense": 4,
+    "keywords": ["shoes"],
+    "slot": "HUMANOID_FEET"
+  },
+  {
+    "name": "dwarven boots",
+    "description": "Sturdy boots forged in the deep forges of the dwarves.",
+    "weight": 6.0,
+    "value": 20,
+    "defense": 15,
+    "keywords": ["boots"],
+    "slot": "HUMANOID_FEET"
+  },
+  {
+    "name": "mage slippers",
+    "description": "Soft slippers enchanted to enhance magical abilities.",
+    "weight": 1.5,
+    "value": 25,
+    "defense": 5,
+    "keywords": ["slippers"],
+    "slot": "HUMANOID_FEET"
+  },
+  {
+    "name": "steel boots",
+    "description": "Heavy steel footwear offering excellent protection in battle.",
+    "weight": 5.0,
+    "value": 30,
+    "defense": 18,
+    "keywords": ["boots"],
+    "slot": "HUMANOID_FEET"
+  },
+  {
+    "name": "ranger moccasins",
+    "description": "Comfortable moccasins ideal for silent movement in the wild.",
+    "weight": 2.0,
+    "value": 15,
+    "defense": 7,
+    "keywords": ["moccasins"],
+    "slot": "HUMANOID_FEET"
+  }
+]

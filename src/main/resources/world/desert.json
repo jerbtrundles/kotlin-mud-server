@@ -1,0 +1,105 @@
+{
+  "id": "desert",
+  "region-name": "The Desert",
+  "max-npcs": 0,
+  "max-healers": 0,
+  "max-wizards": 0,
+  "max-monsters": 1,
+  "monsters": [
+    "sand worm"
+  ],
+  "subregions": [
+    {
+      "subregion-name": "Dunes",
+      "rooms": [
+        {
+          "coordinates": "desert, 0, 0",
+          "description": "This is the northwest room.",
+          "connections": [
+            "desert, 0, 1 - go east",
+            "desert, 0, 3 - go south",
+            "desert, 0, 4 - go southeast"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 1",
+          "description": "This is the north room.",
+          "connections": [
+            "desert, 0, 0 - go west",
+            "desert, 0, 2 - go east",
+            "desert, 0, 4 - go south"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 2",
+          "description": "This is the northeast room.",
+          "connections": [
+            "desert, 0, 1 - go west",
+            "desert, 0, 4 - go southwest",
+            "desert, 0, 5 - go south"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 3",
+          "description": "This is the west room. The town gates are here.",
+          "connections": [
+            "town, 0, 5 - go gates",
+            "desert, 0, 0 - go north",
+            "desert, 0, 4 - go east",
+            "desert, 0, 6 - go south"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 4",
+          "description": "This is the central room.",
+          "connections": [
+            "desert, 0, 0 - go northwest",
+            "desert, 0, 1 - go north",
+            "desert, 0, 2 - go northeast",
+            "desert, 0, 3 - go west",
+            "desert, 0, 5 - go east",
+            "desert, 0, 6 - go southwest",
+            "desert, 0, 7 - go south",
+            "desert, 0, 8 - go southeast"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 5",
+          "description": "This is the east room.",
+          "connections": [
+            "desert, 0, 2 - go north",
+            "desert, 0, 4 - go west",
+            "desert, 0, 8 - go south"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 6",
+          "description": "This is the southwest room.",
+          "connections": [
+            "desert, 0, 3 - go north",
+            "desert, 0, 4 - go northeast",
+            "desert, 0, 7 - go east"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 7",
+          "description": "This is the south room.",
+          "connections": [
+            "desert, 0, 4 - go north",
+            "desert, 0, 6 - go west",
+            "desert, 0, 8 - go east"
+          ]
+        },
+        {
+          "coordinates": "desert, 0, 8",
+          "description": "This is the southeast room.",
+          "connections": [
+            "desert, 0, 4 - go northwest",
+            "desert, 0, 5 - go north",
+            "desert, 0, 7 - go west"
+          ]
+        }
+      ]
+    }
+  ]
+}

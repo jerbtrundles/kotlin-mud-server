@@ -9,6 +9,8 @@ import engine.entity.behavior.EntityAction
 import engine.entity.behavior.EntityBehavior
 import engine.entity.behavior.EntitySituation
 import engine.entity.behavior.FlavorText
+import engine.entity.body.EntityBody
+import engine.entity.body.EntityBodyPart
 import engine.game.Game
 import engine.game.MovementDirection
 import engine.item.*
@@ -16,6 +18,7 @@ import engine.magic.Spell
 import engine.magic.SpellEffect
 import engine.magic.SpellEffectType
 import engine.magic.Spells
+import engine.utility.Common.collectionString
 import engine.utility.appendLine
 import engine.utility.Common.d100
 import engine.world.Connection
@@ -33,8 +36,8 @@ abstract class EntityBase(
     val behavior: EntityBehavior,
     val actionDelayMin: Int,
     val actionDelayMax: Int,
+    val body: EntityBody,
     var weapon: ItemWeapon? = null,
-    var armor: ItemArmor? = null,
     val inventory: Inventory,
     val namePrefix: String = "",
     val job: String = "",
@@ -53,8 +56,10 @@ abstract class EntityBase(
     private var currentRoom: Room = World.void
     private var posture: EntityPosture = EntityPosture.STANDING
     var hasNotBeenSearched = true
-    val isDead get() = attributes.currentHealth <= 0
-    val isAlive get() = !isDead
+    val isDead
+        get() = attributes.currentHealth <= 0
+    val isAlive
+        get() = !isDead
     val coordinates
         get() = currentRoom.coordinates
 
@@ -91,9 +96,14 @@ abstract class EntityBase(
         get() = "$namePrefix$deathName"
     // endregion
 
-    fun isInjuredMinor() = attributes.isInjuredMinor()
-    fun isInjuredModerate() = attributes.isInjuredModerate()
-    fun isInjuredMajor() = attributes.isInjuredMajor()
+    fun isInjuredMinor() =
+        attributes.isInjuredMinor()
+
+    fun isInjuredModerate() =
+        attributes.isInjuredModerate()
+
+    fun isInjuredMajor() =
+        attributes.isInjuredMajor()
 
     // region strings
     fun getString(item: ItemBase) =
@@ -101,6 +111,11 @@ abstract class EntityBase(
 
     fun dropString(item: ItemBase) =
         Messages.get(Message.ENTITY_DROPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+
+    fun unequipAndDropString(item: ItemBase) =
+        Messages.get(Message.ENTITY_UNEQUIPS_AND_DROPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+    fun pickUpAndEquip(item: ItemBase) =
+        Messages.get(Message.ENTITY_PICKS_UP_AND_EQUIPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
 
     fun dropString(inventory: Inventory) =
         Messages.get(Message.ENTITY_DROPS_ITEM, prefixedRandomName, inventory.collectionString)
@@ -149,11 +164,14 @@ abstract class EntityBase(
             Messages.get(Message.ENTITY_HEADS_OVER_TO_THE_CONNECTION, prefixedRandomName, connection.matchInput.suffix)
         }
 
-    fun putAwayString(item: ItemBase) = Messages.get(Message.ENTITY_PUTS_AWAY_ITEM, prefixedRandomName, item.name)
+    fun putAwayString(item: ItemBase) =
+        Messages.get(Message.ENTITY_PUTS_AWAY_ITEM, prefixedRandomName, item.name)
+
     fun equipString(item: ItemBase) =
         Messages.get(Message.ENTITY_EQUIPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
 
-    fun removeString(item: ItemBase) = Messages.get(Message.ENTITY_REMOVES_ITEM, prefixedRandomName, item.name)
+    fun removeString(item: ItemBase) =
+        Messages.get(Message.ENTITY_REMOVES_ITEM, prefixedRandomName, item.name)
     // endregion
 
     // region core, init, cleanup
@@ -217,7 +235,8 @@ abstract class EntityBase(
             )
         )
 
-    fun matchesKeyword(keyword: String) = (name == keyword) || keywords.contains(keyword)
+    fun matchesKeyword(keyword: String) =
+        (name == keyword) || keywords.contains(keyword)
     // endregion
 
     // region hostilities
@@ -236,8 +255,11 @@ abstract class EntityBase(
     val deadAndUnsearchedHostilesCount
         get() = deadAndUnsearchedHostilesInCurrentRoom.size
 
-    fun isHostileTo(otherEntity: EntityBase) = faction.isHostileTo(otherEntity.faction)
-    fun isHostileTo(otherFaction: EntityFactions) = faction.isHostileTo(otherFaction)
+    fun isHostileTo(otherEntity: EntityBase) =
+        faction.isHostileTo(otherEntity.faction)
+
+    fun isHostileTo(otherFaction: EntityFactions) =
+        faction.isHostileTo(otherFaction)
 
     fun doAttackPlayer() =
         if (posture != EntityPosture.STANDING) {
@@ -288,12 +310,20 @@ abstract class EntityBase(
                     appendLine(getQuip(randomLivingHostile))
                 }
 
-                appendLine(
-                    Message.ENTITY_ATTACKS_ENTITY,
-                    prefixedFullName,
-                    randomLivingHostile.conversationalName,
-                    weaponString
-                )
+                if (weapon != null) {
+                    appendLine(
+                        Message.ENTITY_ATTACKS_ENTITY_WEAPON,
+                        prefixedFullName,
+                        randomLivingHostile.conversationalName,
+                        weaponString
+                    )
+                } else {
+                    appendLine(
+                        Message.ENTITY_ATTACKS_ENTITY_NO_WEAPON,
+                        prefixedFullName,
+                        randomLivingHostile.conversationalName
+                    )
+                }
 
                 if (damage > 0) {
                     appendLine(Message.ENTITY_HITS_FOR_DAMAGE, damage.toString())
@@ -324,44 +354,54 @@ abstract class EntityBase(
         currentRoom.entities.filter { faction.isHostileTo(it.faction) && it.isDead && it.hasNotBeenSearched }
             .randomOrNull()?.let { deadHostile ->
                 // build and announce a single drop string out of weapon, armor, and other inventory items
-                with(StringBuilder()) {
-                    appendLine(
-                        Message.ENTITY_SEARCHES_DEAD_ENTITY,
-                        capitalizedPrefixedFullName,
-                        deadHostile.conversationalName
+                val sb = StringBuilder()
+                sb.appendLine(
+                    Message.ENTITY_SEARCHES_DEAD_ENTITY,
+                    capitalizedPrefixedFullName,
+                    deadHostile.conversationalName
+                )
+
+                // drop weapon
+                deadHostile.weapon?.let {
+                    currentRoom.addItem(it)
+                    sb.appendLine(
+                        Message.ENTITY_DROPS_ITEM,
+                        deadHostile.prefixedFullName,
+                        it.nameWithIndefiniteArticle
                     )
-
-                    deadHostile.weapon?.let {
-                        currentRoom.addItem(it)
-                        appendLine(
-                            Message.ENTITY_DROPS_ITEM,
-                            deadHostile.prefixedFullName,
-                            it.nameWithIndefiniteArticle
-                        )
-                    }
-
-                    deadHostile.armor?.let {
-                        currentRoom.addItem(it)
-                        appendLine(
-                            Message.ENTITY_DROPS_ITEM,
-                            deadHostile.prefixedFullName,
-                            it.nameWithIndefiniteArticle
-                        )
-                    }
-
-                    if (deadHostile.inventory.isNotEmpty()) {
-                        appendLine(deadHostile.dropString(deadHostile.inventory))
-                        currentRoom.addInventory(deadHostile.inventory)
-                    }
-
-                    Debug.println(
-                        "EntityBase::doSearchRandomUnsearchedDeadHostile()\n" +
-                                "$coordinates - $nameWithJob - ${deadHostile.nameWithJob}",
-                        DebugMessageType.ENTITY_SEARCH
-                    )
-                    sendToAll(this)
                 }
 
+                // drop body armor
+                var droppedArmor = mutableListOf<String>()
+                deadHostile.body.parts.forEach { bodyPart ->
+                    bodyPart.equippedItem?.let {
+                        currentRoom.addItem(it)
+                        droppedArmor.add(it.name)
+                    }
+                }
+                if (droppedArmor.isNotEmpty()) {
+                    sb.appendLine(
+                        Message.ENTITY_DROPS_ITEM,
+                        deadHostile.prefixedFullName,
+                        collectionString(droppedArmor, includeIndefiniteArticles = true)
+                    )
+                }
+
+                // drop items
+                // TODO: fix this to use Message
+                if (deadHostile.inventory.isNotEmpty()) {
+                    sb.appendLine(deadHostile.dropString(deadHostile.inventory))
+                    currentRoom.addInventory(deadHostile.inventory)
+                }
+
+                Debug.println(
+                    "EntityBase::doSearchRandomUnsearchedDeadHostile()\n" +
+                            "$coordinates - $nameWithJob - ${deadHostile.nameWithJob}",
+                    DebugMessageType.ENTITY_SEARCH
+                )
+                sendToAll(sb)
+
+                // flag for cleanup
                 deadHostile.hasNotBeenSearched = false
             }
     // endregion
@@ -379,20 +419,23 @@ abstract class EntityBase(
             doQuipToEntity(it)
         }
 
-    private fun doQuipToEntity(entity: EntityBase) = sendToAll(getQuip(entity))
-    private fun getQuip(entity: EntityBase) = when {
-        isAlive && entity.isAlive && isHostileTo(entity) -> getLivingToLivingHostileQuip(entity)
-        isAlive && entity.isAlive -> getLivingToLivingFriendlyQuip(entity)
-        isAlive && entity.isDead && isHostileTo(entity) -> getLivingToDeadHostileQuip(entity)
-        isAlive && entity.isDead -> getLivingToDeadFriendlyQuip(entity)
+    private fun doQuipToEntity(entity: EntityBase) =
+        sendToAll(getQuip(entity))
 
-        isDead && entity.isAlive && isHostileTo(entity) -> getDeadToLivingHostileQuip(entity)
-        isDead && entity.isAlive -> getDeadToLivingFriendlyQuip(entity)
-        isDead && entity.isDead && isHostileTo(entity) -> getDeadToDeadHostileQuip(entity)
-        isDead && entity.isDead -> getDeadToDeadFriendlyQuip(entity)
+    private fun getQuip(entity: EntityBase) =
+        when {
+            isAlive && entity.isAlive && isHostileTo(entity) -> getLivingToLivingHostileQuip(entity)
+            isAlive && entity.isAlive -> getLivingToLivingFriendlyQuip(entity)
+            isAlive && entity.isDead && isHostileTo(entity) -> getLivingToDeadHostileQuip(entity)
+            isAlive && entity.isDead -> getLivingToDeadFriendlyQuip(entity)
 
-        else -> ""
-    }
+            isDead && entity.isAlive && isHostileTo(entity) -> getDeadToLivingHostileQuip(entity)
+            isDead && entity.isAlive -> getDeadToLivingFriendlyQuip(entity)
+            isDead && entity.isDead && isHostileTo(entity) -> getDeadToDeadHostileQuip(entity)
+            isDead && entity.isDead -> getDeadToDeadFriendlyQuip(entity)
+
+            else -> ""
+        }
 
     private fun getDeadToDeadHostileQuip(deadHostileEntity: EntityBase) =
         Messages.get(
@@ -473,18 +516,23 @@ abstract class EntityBase(
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_FRIENDLY_ENTITY)
         )
 
-    fun doMumble() = sendToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
+    fun doMumble() =
+        sendToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
 
     abstract fun say(what: String): String
 
-    fun sendToAll(sb: StringBuilder) = sendToAll(sb.trim('\n').toString())
-    fun sendToAll(what: String) = currentRoom.sendToAll(what)
+    fun sendToAll(sb: StringBuilder) =
+        sendToAll(sb.trim('\n').toString())
+
+    fun sendToAll(what: String) =
+        currentRoom.sendToAll(what)
+
     fun sendToAll(message: Message, vararg tokens: String) =
         currentRoom.sendToAll(Messages.get(message, *tokens))
     // endregion
 
     // region get items, weapons, armor
-    private fun doGetValuableItem() {
+    private fun doGetValuableItem() =
         currentRoom.getAndRemoveRandomValuableItemOrNull()?.let { item ->
             with(StringBuilder()) {
                 // TODO: this doesn't feel like a great solution
@@ -503,7 +551,6 @@ abstract class EntityBase(
                 sendToAll(this)
             }
         }
-    }
 
     private fun doFindAndEquipAnyWeapon() =
         // check personal inventory first
@@ -526,19 +573,31 @@ abstract class EntityBase(
             }
         } ?: doNothing()
 
-    private fun doFindAndEquipAnyArmor() {
-        currentRoom.getAndRemoveRandomArmorOrNull()?.let { foundArmor ->
-            armor?.let { oldArmor ->
-                sendToAll(dropString(oldArmor))
-                currentRoom.addItem(oldArmor)
-            }
+    private fun doFindAndEquipAnyArmor() =
+        body.parts.forEach { bodyPart ->
+            (inventory.getAndRemoveRandomArmorOrNull(bodyPart)
+                ?: currentRoom.getAndRemoveRandomArmorOrNull(bodyPart))?.let { newArmor ->
+                bodyPart.equippedItem?.let { oldArmor ->
+                    sendToAll(unequipAndDropString(oldArmor))
+                    currentRoom.addItem(oldArmor)
+                }
 
-            armor = foundArmor
-            // TODO: consider flavor text
-            // say(FlavorText.get(EntityAction.GET_ANY_ITEM))
-            sendToAll(getString(foundArmor))
+                // debug only
+                val oldArmor = "[${bodyPart.slot}] ${bodyPart.equippedItem?.name ?: "nothing"}"
+
+                bodyPart.equippedItem = newArmor
+
+                Debug.println(
+                    "EntityBase::doFindAndEquipAnyArmor()\n" +
+                            "$coordinates - $nameWithJob - ($oldArmor -> ${newArmor.name})",
+                    DebugMessageType.ENTITY_FIND_WEAPON
+                )
+
+                // TODO: consider flavor text
+                // say(FlavorText.get(EntityAction.GET_ANY_ITEM))
+                sendToAll(pickUpAndEquip(newArmor))
+            }
         }
-    }
 
     private fun doGetAndRemoveRandomItem() =
         currentRoom.getAndRemoveRandomItemOrNull()?.let { item ->
@@ -546,11 +605,10 @@ abstract class EntityBase(
             item
         }
 
-    private fun doRemoveRandomItem() {
+    private fun doRemoveRandomItem() =
         currentRoom.getAndRemoveRandomItemOrNull()?.let { item ->
             sendToAll(destroyString(item))
         }
-    }
 
     private fun doGetRandomBetterWeapon() {
         (inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)
@@ -562,7 +620,7 @@ abstract class EntityBase(
                         currentRoom.addItem(oldWeapon)
                     }
 
-                    val oldWeapon = weapon?.name ?: "nothing"
+                    val oldWeapon = "[weapon] ${weapon?.name ?: "nothing"}"
 
                     weapon = newWeapon
                     appendLine(getString(newWeapon))
@@ -578,44 +636,46 @@ abstract class EntityBase(
     }
 
     private fun doGetRandomBetterArmor() {
-        (inventory.getAndRemoveRandomBetterArmorOrNull(armor?.defense?.plus(1) ?: 0)
-            ?: currentRoom.getAndRemoveRandomBetterArmorOrNull((armor?.defense?.plus(1)) ?: 0))
-            ?.let { newArmor ->
-                with(StringBuilder()) {
-                    armor?.let { oldArmor ->
-                        currentRoom.addItem(oldArmor)
-                        appendLine(dropString(oldArmor))
-                    }
+        val sb = StringBuilder()
 
-                    // for debug messaging; not used otherwise
-                    val oldArmor = armor?.name ?: "nothing"
-
-                    armor = newArmor
-                    appendLine(getString(newArmor))
-
-                    Debug.println(
-                        "EntityBase::doGetRandomBetterArmor()\n" +
-                                "$coordinates - $nameWithJob - ($oldArmor -> ${newArmor.name})",
-                        DebugMessageType.ENTITY_FIND_ARMOR
-                    )
-                    sendToAll(this)
+        body.parts.forEach { bodyPart ->
+            (inventory.getAndRemoveBetterArmorOrNull(bodyPart)
+                ?: currentRoom.getAndRemoveBetterArmorOrNull(bodyPart))?.let { newArmor ->
+                bodyPart.equippedItem?.let { oldArmor ->
+                    currentRoom.addItem(oldArmor)
+                    sb.appendLine(unequipAndDropString(oldArmor))
                 }
-            } ?: doNothing()
 
-        // Debug.println("EntityBase::doGetRandomArmor() - no armor in current room")
-        // doNothing()
+                // used for debug string; not used elsewhere
+                val oldArmor = "[${bodyPart.slot}] ${bodyPart.equippedItem?.name ?: "nothing"}"
+
+                bodyPart.equippedItem = newArmor
+                sb.appendLine(pickUpAndEquip(newArmor))
+
+                Debug.println(
+                    "EntityBase::doGetRandomBetterArmor()\n" +
+                            "$coordinates - $nameWithJob - ($oldArmor -> ${newArmor.name})",
+                    DebugMessageType.ENTITY_FIND_ARMOR
+                )
+
+                Debug.println(sb, DebugMessageType.ECHO_MESSAGE)
+                sendToAll(sb)
+
+                // just do one replacement
+                return
+            }
+        }
     }
 
     private fun foundBetterArmor() =
-        (inventory.getBestArmorOrNull() ?: currentRoom.getBestArmorOrNull())?.let { bestArmor ->
-            // if we already have armor equipped...
-            armor?.let { myArmor ->
-                // return whether my defense is less than best-in-room
-                myArmor.defense < bestArmor.defense
-                // found armor, and I have none equipped
-            } ?: true
-            // didn't find armor
-        } ?: false
+        body.parts.any { bodyPart ->
+            foundBetterArmor(bodyPart)
+        }
+
+    private fun foundBetterArmor(bodyPart: EntityBodyPart) =
+        inventory.containsBetterArmor(bodyPart) ||
+                currentRoom.containsBetterArmor(bodyPart)
+
 
     private fun foundBetterWeapon() =
         (inventory.getBestWeaponOrNull() ?: currentRoom.getBestWeaponOrNull())?.let { bestWeapon ->
@@ -860,11 +920,12 @@ abstract class EntityBase(
             Debug.println("EntityBase::doRandomMove() - need to stand")
             doStand()
         } else {
-            val connection = if (canTravelBetweenRegions) {
-                currentRoom.connections.random()
-            } else {
-                currentRoom.connectionsInRegion.random()
-            }
+            val connection =
+                if (canTravelBetweenRegions) {
+                    currentRoom.connections.random()
+                } else {
+                    currentRoom.connectionsInRegion.random()
+                }
 
             World.getRoomFromCoordinates(connection.coordinates)?.let { newRoom ->
                 doMove(newRoom, connection)
@@ -873,7 +934,6 @@ abstract class EntityBase(
         }
 
     private fun doMove(newRoom: Room, connection: Connection) {
-        // Debug.println("EntityBase::doRandomMove() - $name - move from ${currentRoom.coordinates} to ${newRoom.coordinates}")
         // pass the connection as part of the move message
         currentRoom.removeEntity(this, connection)
         currentRoom = newRoom
@@ -889,6 +949,8 @@ abstract class EntityBase(
             EntitySituation.INJURED_MINOR -> isInjuredMinor()
             EntitySituation.INJURED_MODERATE -> isInjuredModerate()
             EntitySituation.INJURED_MAJOR -> isInjuredMajor()
+
+            EntitySituation.INJURED_FRIENDLY_IN_ROOM -> currentRoom.containsInjuredFriendly(friend = this)
 
             EntitySituation.SITTING -> posture == EntityPosture.SITTING
             EntitySituation.NOT_SITTING -> posture != EntityPosture.SITTING
@@ -933,7 +995,6 @@ abstract class EntityBase(
             EntitySituation.ARMOR_IN_CURRENT_ROOM -> currentRoom.containsArmor()
 
             EntitySituation.NO_EQUIPPED_WEAPON -> weapon == null
-            EntitySituation.NO_EQUIPPED_ARMOR -> armor == null
 
             EntitySituation.ANY_UNSEARCHED_DEAD_HOSTILES -> deadAndUnsearchedHostilesCount > 0
 
@@ -944,9 +1005,8 @@ abstract class EntityBase(
             EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_JUNK -> inventory.containsJunk() || currentRoom.containsJunk()
             EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_CONTAINER -> inventory.containsContainer() || currentRoom.containsContainer()
 
-            EntitySituation.INJURED_FRIENDLY_IN_ROOM -> currentRoom.containsInjuredFriendly(friend = this)
             EntitySituation.CAN_CAST_HEALING_SPELL -> canCastSpellWithEffectType(SpellEffectType.RESTORE_HEALTH)
-            EntitySituation.CAN_CAST_FIRE_SPELL -> canCastSpellWithEffectType(SpellEffectType.FIRE_DAMAGE)
+            EntitySituation.CAN_CAST_FIRE_DAMAGE_SPELL -> canCastSpellWithEffectType(SpellEffectType.FIRE_DAMAGE)
             EntitySituation.CAN_CAST_DAMAGE_SPELL -> damageSpells.isNotEmpty()
             else -> false
         }

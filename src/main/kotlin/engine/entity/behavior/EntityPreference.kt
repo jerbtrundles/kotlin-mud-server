@@ -44,7 +44,7 @@ class EntityPreference(
         val defaultPreferenceCastFireAtLivingHostile = EntityPreference(
             listOf(
                 EntitySituation.ANY_LIVING_HOSTILES,
-                EntitySituation.CAN_CAST_FIRE_SPELL
+                EntitySituation.CAN_CAST_FIRE_DAMAGE_SPELL
             ),
             EntityAction.CAST_FIRE_AT_LIVING_HOSTILE
         )
