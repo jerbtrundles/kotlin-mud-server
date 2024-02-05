@@ -1,16 +1,22 @@
-package engine.entity
+package engine.entity.core
 
 import engine.Inventory
 import debug.Debug
 import debug.DebugMessageType
 import engine.Message
 import engine.Messages
+import engine.entity.attributes.EntityAttributes
+import engine.entity.attributes.EntityClass
+import engine.entity.attributes.EntityNames
+import engine.entity.attributes.EntityPosture
 import engine.entity.behavior.EntityAction
 import engine.entity.behavior.EntityBehavior
 import engine.entity.behavior.EntitySituation
 import engine.entity.behavior.FlavorText
 import engine.entity.body.EntityBody
 import engine.entity.body.EntityBodyPart
+import engine.entity.faction.EntityFaction
+import engine.entity.faction.EntityFactions
 import engine.game.Game
 import engine.game.MovementDirection
 import engine.item.*
@@ -37,18 +43,13 @@ abstract class EntityBase(
     val actionDelayMin: Int,
     val actionDelayMax: Int,
     val body: EntityBody,
+    val entityClass: EntityClass,
     var weapon: ItemWeapon? = null,
     val inventory: Inventory,
-    val namePrefix: String = "",
-    val job: String = "",
-    val arriveStringSuffix: String = "walks in",
     private val unequippedWeaponString: String = "fists",
     val spells: MutableList<String> = mutableListOf()
 ) {
     abstract val canTravelBetweenRegions: Boolean
-
-    val naturalHealthRestorationRate = 1
-    val naturalMagicRestorationRate = 1
 
     val damageSpells: List<Spell>
         get() = spells.map { spell -> Spells[spell] }.filter { it.isDamageSpell() }
@@ -64,36 +65,16 @@ abstract class EntityBase(
         get() = currentRoom.coordinates
 
     // region names
-    abstract val fullName: String
-    abstract val nameWithJob: String
-    abstract val conversationalName: String
-    abstract val deadConversationalName: String
-    abstract val finalCleanupName: String
-    abstract val randomName: String
+    abstract val names: EntityNames
 
     // "..., a goblin (kneeling), ..."
     val nameForCollectionString
         get() = when {
-            isDead -> "$fullName (dead)"
-            posture == EntityPosture.KNEELING -> "$fullName (kneeling)"
-            posture == EntityPosture.SITTING -> "$fullName (sitting)"
-            else -> fullName
+            isDead -> names.dead
+            posture == EntityPosture.KNEELING -> names.kneeling
+            posture == EntityPosture.SITTING -> names.sitting
+            else -> names.full
         }
-    abstract val nameForStory: String
-    val prefixedFullName
-        get() = "$namePrefix$fullName"
-    val capitalizedPrefixedFullName
-        get() = prefixedFullName.replaceFirstChar { it.uppercase() }
-    val prefixedRandomName
-        get() = "$namePrefix$randomName"
-    val capitalizedPrefixedRandomName
-        get() = prefixedRandomName.replaceFirstChar { it.uppercase() }
-    val capitalizedConversationalName
-        get() = conversationalName.replaceFirstChar { it.uppercase() }
-    abstract val arriveName: String
-    abstract val deathName: String
-    val capitalizedPrefixedDeathName
-        get() = "$namePrefix$deathName"
     // endregion
 
     fun isInjuredMinor() =
@@ -107,32 +88,33 @@ abstract class EntityBase(
 
     // region strings
     fun getString(item: ItemBase) =
-        Messages.get(Message.ENTITY_PICKS_UP_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+        Messages.get(Message.ENTITY_PICKS_UP_ITEM, names.prefixedRandom(), item.nameWithIndefiniteArticle)
 
     fun dropString(item: ItemBase) =
-        Messages.get(Message.ENTITY_DROPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+        Messages.get(Message.ENTITY_DROPS_ITEM, names.prefixedRandom(), item.nameWithIndefiniteArticle)
 
     fun unequipAndDropString(item: ItemBase) =
-        Messages.get(Message.ENTITY_UNEQUIPS_AND_DROPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+        Messages.get(Message.ENTITY_UNEQUIPS_AND_DROPS_ITEM, names.prefixedRandom(), item.nameWithIndefiniteArticle)
+
     fun pickUpAndEquip(item: ItemBase) =
-        Messages.get(Message.ENTITY_PICKS_UP_AND_EQUIPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+        Messages.get(Message.ENTITY_PICKS_UP_AND_EQUIPS_ITEM, names.prefixedRandom(), item.nameWithIndefiniteArticle)
 
     fun dropString(inventory: Inventory) =
-        Messages.get(Message.ENTITY_DROPS_ITEM, prefixedRandomName, inventory.collectionString)
+        Messages.get(Message.ENTITY_DROPS_ITEM, names.prefixedRandom(), inventory.collectionString)
 
     fun destroyString(item: ItemBase) =
-        Messages.get(Message.ENTITY_DESTROYS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+        Messages.get(Message.ENTITY_DESTROYS_ITEM, names.prefixedRandom(), item.nameWithIndefiniteArticle)
 
     val arriveString
-        get() = Messages.get(Message.ENTITY_ARRIVES, arriveName, arriveStringSuffix)
+        get() = Messages.get(Message.ENTITY_ARRIVES, names.arrive, names.arriveSuffix)
     val deathString
-        get() = Messages.get(Message.ENTITY_DIES, capitalizedPrefixedDeathName)
+        get() = Messages.get(Message.ENTITY_DIES, names.capitalizedPrefixedDeath)
     val sitString
-        get() = Messages.get(Message.ENTITY_SITS, capitalizedPrefixedRandomName)
+        get() = Messages.get(Message.ENTITY_SITS, names.capitalizedPrefixedRandom())
     val standString
-        get() = Messages.get(Message.ENTITY_STANDS_UP, capitalizedPrefixedRandomName)
+        get() = Messages.get(Message.ENTITY_STANDS_UP, names.capitalizedPrefixedRandom())
     val kneelString
-        get() = Messages.get(Message.ENTITY_KNEELS, capitalizedPrefixedRandomName)
+        get() = Messages.get(Message.ENTITY_KNEELS, names.capitalizedPrefixedRandom())
 
     // entity weapon
     val weaponString
@@ -141,82 +123,54 @@ abstract class EntityBase(
 
     fun departString(connection: Connection? = null) =
         if (connection == null) {
-            Messages.get(Message.ENTITY_LEAVES_GAME, prefixedRandomName)
+            Messages.get(Message.ENTITY_LEAVES_GAME, names.prefixedRandom())
         } else if (connection.direction != MovementDirection.NONE) {
             // The goblin heads east.
-            // "$prefixedRandomName heads ${connection.direction.toString().lowercase()}."
+            // "$names.prefixedRandom() heads ${connection.direction.toString().lowercase()}."
             Messages.get(
                 Message.ENTITY_HEADS_DIRECTION,
-                prefixedRandomName,
+                names.prefixedRandom(),
                 connection.direction.toString().lowercase()
             )
         } else if (connection.matchInputString.contains("gates")) {
             // TODO: make this better
             // TODO: other cases for climbing, other connection types
             // TODO: The goblin heads through the gates.
-            // "$prefixedRandomName heads through the town gates."
-            Messages.get(Message.ENTITY_HEADS_THROUGH_THE_TOWN_GATES, prefixedRandomName)
+            // "$names.prefixedRandom() heads through the town gates."
+            Messages.get(Message.ENTITY_HEADS_THROUGH_THE_TOWN_GATES, names.prefixedRandom())
         } else if (connection.matchInputString.contains("path")) {
-            Messages.get(Message.ENTITY_HEADS_DOWN_THE_DIRT_PATH, prefixedRandomName)
+            Messages.get(Message.ENTITY_HEADS_DOWN_THE_DIRT_PATH, names.prefixedRandom())
         } else {
             // TODO: make this better
-            // "$prefixedRandomName heads over to the ${connection.matchInput.suffix}."
-            Messages.get(Message.ENTITY_HEADS_OVER_TO_THE_CONNECTION, prefixedRandomName, connection.matchInput.suffix)
+            // "$names.prefixedRandom() heads over to the ${connection.matchInput.suffix}."
+            Messages.get(Message.ENTITY_HEADS_OVER_TO_THE_CONNECTION, names.prefixedRandom(), connection.matchInput.suffix)
         }
 
     fun putAwayString(item: ItemBase) =
-        Messages.get(Message.ENTITY_PUTS_AWAY_ITEM, prefixedRandomName, item.name)
+        Messages.get(Message.ENTITY_PUTS_AWAY_ITEM, names.prefixedRandom(), item.name)
 
     fun equipString(item: ItemBase) =
-        Messages.get(Message.ENTITY_EQUIPS_ITEM, prefixedRandomName, item.nameWithIndefiniteArticle)
+        Messages.get(Message.ENTITY_EQUIPS_ITEM, names.prefixedRandom(), item.nameWithIndefiniteArticle)
 
     fun removeString(item: ItemBase) =
-        Messages.get(Message.ENTITY_REMOVES_ITEM, prefixedRandomName, item.name)
+        Messages.get(Message.ENTITY_REMOVES_ITEM, names.prefixedRandom(), item.name)
     // endregion
 
-    // region core, init, cleanup
-    suspend fun goLiveYourLifeAndBeFree(initialRoom: Room) {
-        doInit(initialRoom)
-
-        while (hasNotBeenSearched && Game.running) {
-            doDelay()
-            doAction()
-        }
-
-        doFinalCleanup()
-    }
-
-    suspend fun naturalHealthRestoration() {
-        while (isAlive && Game.running) {
-            if (attributes.currentHealth < attributes.maximumHealth) {
-                val old = "${attributes.currentHealth}/${attributes.maximumHealth}"
-                val new = "${attributes.currentHealth + naturalHealthRestorationRate}/${attributes.maximumHealth}"
-                Debug.println(
-                    "Natural health restoration $name: $old -> $new",
-                    DebugMessageType.ENTITY_PASSIVE_EFFECT
-                )
+    // region core
+    private fun canCastSpellWithEffectType(effectType: SpellEffectType): Boolean {
+        val canICastThis = spells.any {
+            with(Spells[it]) {
+                hasEffectType(effectType) && hasEnoughMagicToCast(this)
             }
-            attributes.currentHealth += naturalHealthRestorationRate
-            doDelay()
         }
+
+        Debug.println("Do I have $effectType: $canICastThis", DebugMessageType.ENTITY_CHECK_FOR_MAGIC_EFFECT)
+        return canICastThis
     }
 
-    suspend fun naturalMagicRestoration() {
-        while (isAlive && Game.running) {
-            if (attributes.currentMagic < attributes.maximumMagic) {
-                val old = "${attributes.currentMagic}/${attributes.maximumMagic}"
-                val new = "${attributes.currentMagic + naturalMagicRestorationRate}/${attributes.maximumMagic}"
-                Debug.println(
-                    "Natural magic restoration $name: $old -> $new",
-                    DebugMessageType.ENTITY_PASSIVE_EFFECT
-                )
-            }
-            attributes.currentMagic += naturalMagicRestorationRate
-            doDelay()
-        }
-    }
-
-    protected fun doAction() =
+    private fun hasEnoughMagicToCast(spell: Spell) =
+        attributes.currentMagic >= spell.cost
+       protected fun doAction() =
         if (isDead) {
             doIsDead()
         } else {
@@ -277,7 +231,7 @@ abstract class EntityBase(
 
                 with(StringBuilder()) {
                     // TODO: quips at player
-                    appendLine(Message.ENTITY_ATTACKS_PLAYER, prefixedFullName, weaponString)
+                    appendLine(Message.ENTITY_ATTACKS_PLAYER, names.prefixedFull, weaponString)
 
                     if (damage > 0) {
                         appendLine(Message.ENTITY_HITS_ENTITY_FOR_DAMAGE, damage.toString())
@@ -313,15 +267,15 @@ abstract class EntityBase(
                 if (weapon != null) {
                     appendLine(
                         Message.ENTITY_ATTACKS_ENTITY_WEAPON,
-                        prefixedFullName,
-                        randomLivingHostile.conversationalName,
+                        names.prefixedFull,
+                        randomLivingHostile.names.conversational,
                         weaponString
                     )
                 } else {
                     appendLine(
                         Message.ENTITY_ATTACKS_ENTITY_NO_WEAPON,
-                        prefixedFullName,
-                        randomLivingHostile.conversationalName
+                        names.prefixedFull,
+                        randomLivingHostile.names.conversational
                     )
                 }
 
@@ -339,7 +293,7 @@ abstract class EntityBase(
 
                 Debug.println(
                     "EntityBase::doAttackRandomLivingHostile()\n" +
-                            "$coordinates - $nameWithJob -> ${randomLivingHostile.nameWithJob} " +
+                            "$coordinates - ${names.withJob} -> ${randomLivingHostile.names.withJob} " +
                             "[$damage damage, ${randomLivingHostile.attributes.currentHealth} health left]",
                     DebugMessageType.ENTITY_ATTACK
                 )
@@ -357,8 +311,8 @@ abstract class EntityBase(
                 val sb = StringBuilder()
                 sb.appendLine(
                     Message.ENTITY_SEARCHES_DEAD_ENTITY,
-                    capitalizedPrefixedFullName,
-                    deadHostile.conversationalName
+                    names.capitalizedPrefixedFull,
+                    deadHostile.names.conversational
                 )
 
                 // drop weapon
@@ -366,7 +320,7 @@ abstract class EntityBase(
                     currentRoom.addItem(it)
                     sb.appendLine(
                         Message.ENTITY_DROPS_ITEM,
-                        deadHostile.prefixedFullName,
+                        deadHostile.names.prefixedFull,
                         it.nameWithIndefiniteArticle
                     )
                 }
@@ -382,7 +336,7 @@ abstract class EntityBase(
                 if (droppedArmor.isNotEmpty()) {
                     sb.appendLine(
                         Message.ENTITY_DROPS_ITEM,
-                        deadHostile.prefixedFullName,
+                        deadHostile.names.prefixedFull,
                         collectionString(droppedArmor, includeIndefiniteArticles = true)
                     )
                 }
@@ -396,7 +350,7 @@ abstract class EntityBase(
 
                 Debug.println(
                     "EntityBase::doSearchRandomUnsearchedDeadHostile()\n" +
-                            "$coordinates - $nameWithJob - ${deadHostile.nameWithJob}",
+                            "$coordinates - ${names.withJob} - ${deadHostile.names.withJob}",
                     DebugMessageType.ENTITY_SEARCH
                 )
                 sendToAll(sb)
@@ -410,7 +364,7 @@ abstract class EntityBase(
     private fun doDeadSoloQuip() =
         sendToAll(
             Message.DEAD_ENTITY_QUIPS_SOLO,
-            deadConversationalName,
+            names.deadConversational,
             FlavorText.get(EntityAction.DEAD_QUIP_SOLO)
         )
 
@@ -440,32 +394,32 @@ abstract class EntityBase(
     private fun getDeadToDeadHostileQuip(deadHostileEntity: EntityBase) =
         Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
-            prefixedRandomName,
-            deadHostileEntity.conversationalName,
+            names.prefixedRandom(),
+            deadHostileEntity.names.conversational,
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_DEAD_HOSTILE_ENTITY)
         )
 
     private fun getDeadToLivingHostileQuip(livingHostileEntity: EntityBase) =
         Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
-            prefixedRandomName,
-            livingHostileEntity.conversationalName,
+            names.prefixedRandom(),
+            livingHostileEntity.names.conversational,
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_HOSTILE_ENTITY)
         )
 
     private fun getLivingToDeadHostileQuip(deadHostileEntity: EntityBase) =
         Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
-            prefixedRandomName,
-            deadHostileEntity.conversationalName,
+            names.prefixedRandom(),
+            deadHostileEntity.names.conversational,
             FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_DEAD_HOSTILE_ENTITY)
         )
 
     private fun getLivingToLivingHostileQuip(livingHostileEntity: EntityBase) =
         Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
-            prefixedRandomName,
-            livingHostileEntity.conversationalName,
+            names.prefixedRandom(),
+            livingHostileEntity.names.conversational,
             FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_LIVING_HOSTILE_ENTITY)
         )
 
@@ -473,12 +427,12 @@ abstract class EntityBase(
         if (livingFriendlyEntity == this) {
             // i'm alive and quipping to myself...
             // TODO: we can do better than this
-            Messages.get(Message.ENTITY_MUMBLES, prefixedRandomName)
+            Messages.get(Message.ENTITY_MUMBLES, names.prefixedRandom())
         } else {
             Messages.get(
                 Message.ENTITY_SAYS_TO_ENTITY,
-                prefixedRandomName,
-                livingFriendlyEntity.conversationalName,
+                names.prefixedRandom(),
+                livingFriendlyEntity.names.conversational,
                 FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_LIVING_FRIENDLY_ENTITY)
             )
         }
@@ -486,8 +440,8 @@ abstract class EntityBase(
     private fun getLivingToDeadFriendlyQuip(deadFriendlyEntity: EntityBase) =
         Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
-            prefixedRandomName,
-            deadFriendlyEntity.deadConversationalName,
+            names.prefixedRandom(),
+            deadFriendlyEntity.names.deadConversational,
             FlavorText.get(EntityAction.LIVING_ENTITY_SAYS_TO_DEAD_FRIENDLY_ENTITY)
         )
 
@@ -496,14 +450,14 @@ abstract class EntityBase(
             // i'm dead and quipping to myself...
             Messages.get(
                 Message.DEAD_ENTITY_QUIPS_SOLO,
-                deadConversationalName,
+                names.deadConversational,
                 FlavorText.get(EntityAction.DEAD_QUIP_SOLO)
             )
         } else {
             Messages.get(
                 Message.ENTITY_SAYS_TO_ENTITY,
-                prefixedRandomName,
-                deadFriendlyEntity.deadConversationalName,
+                names.prefixedRandom(),
+                deadFriendlyEntity.names.deadConversational,
                 FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_DEAD_FRIENDLY_ENTITY)
             )
         }
@@ -511,13 +465,13 @@ abstract class EntityBase(
     private fun getDeadToLivingFriendlyQuip(livingFriendlyEntity: EntityBase) =
         Messages.get(
             Message.ENTITY_SAYS_TO_ENTITY,
-            prefixedRandomName,
-            livingFriendlyEntity.randomName,
+            names.prefixedRandom(),
+            livingFriendlyEntity.names.random(),
             FlavorText.get(EntityAction.DEAD_ENTITY_SAYS_TO_LIVING_FRIENDLY_ENTITY)
         )
 
     fun doMumble() =
-        sendToAll(Message.ENTITY_MUMBLES, prefixedRandomName)
+        sendToAll(Message.ENTITY_MUMBLES, names.prefixedRandom())
 
     abstract fun say(what: String): String
 
@@ -531,7 +485,7 @@ abstract class EntityBase(
         currentRoom.sendToAll(Messages.get(message, *tokens))
     // endregion
 
-    // region get items, weapons, armor
+    // region get items
     private fun doGetValuableItem() =
         currentRoom.getAndRemoveRandomValuableItemOrNull()?.let { item ->
             with(StringBuilder()) {
@@ -545,59 +499,13 @@ abstract class EntityBase(
 
                 Debug.println(
                     "EntityBase::doGetValuableItem()\n" +
-                            "$coordinates - $nameWithJob - ${item.name}",
+                            "$coordinates - ${names.withJob} - ${item.name}",
                     DebugMessageType.ENTITY_GET_VALUABLE_ITEM
                 )
                 sendToAll(this)
             }
         }
 
-    private fun doFindAndEquipAnyWeapon() =
-        // check personal inventory first
-        (inventory.getAndRemoveRandomWeaponOrNull()
-        // check room next
-            ?: currentRoom.getAndRemoveRandomWeaponOrNull())?.let { foundWeapon ->
-            with(StringBuilder()) {
-                weapon?.let { oldWeapon ->
-                    appendLine(dropString(oldWeapon))
-                    currentRoom.addItem(oldWeapon)
-                }
-
-                weapon = foundWeapon
-
-                d100(10) {
-                    appendLine(say(FlavorText.get(EntityAction.GET_ANY_ITEM)))
-                }
-                appendLine(equipString(foundWeapon))
-                sendToAll(this)
-            }
-        } ?: doNothing()
-
-    private fun doFindAndEquipAnyArmor() =
-        body.parts.forEach { bodyPart ->
-            (inventory.getAndRemoveRandomArmorOrNull(bodyPart)
-                ?: currentRoom.getAndRemoveRandomArmorOrNull(bodyPart))?.let { newArmor ->
-                bodyPart.equippedItem?.let { oldArmor ->
-                    sendToAll(unequipAndDropString(oldArmor))
-                    currentRoom.addItem(oldArmor)
-                }
-
-                // debug only
-                val oldArmor = "[${bodyPart.slot}] ${bodyPart.equippedItem?.name ?: "nothing"}"
-
-                bodyPart.equippedItem = newArmor
-
-                Debug.println(
-                    "EntityBase::doFindAndEquipAnyArmor()\n" +
-                            "$coordinates - $nameWithJob - ($oldArmor -> ${newArmor.name})",
-                    DebugMessageType.ENTITY_FIND_WEAPON
-                )
-
-                // TODO: consider flavor text
-                // say(FlavorText.get(EntityAction.GET_ANY_ITEM))
-                sendToAll(pickUpAndEquip(newArmor))
-            }
-        }
 
     private fun doGetAndRemoveRandomItem() =
         currentRoom.getAndRemoveRandomItemOrNull()?.let { item ->
@@ -609,80 +517,6 @@ abstract class EntityBase(
         currentRoom.getAndRemoveRandomItemOrNull()?.let { item ->
             sendToAll(destroyString(item))
         }
-
-    private fun doGetRandomBetterWeapon() {
-        (inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)
-            ?: currentRoom.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0))
-            ?.let { newWeapon ->
-                with(StringBuilder()) {
-                    weapon?.let { oldWeapon ->
-                        appendLine(dropString(oldWeapon))
-                        currentRoom.addItem(oldWeapon)
-                    }
-
-                    val oldWeapon = "[weapon] ${weapon?.name ?: "nothing"}"
-
-                    weapon = newWeapon
-                    appendLine(getString(newWeapon))
-
-                    Debug.println(
-                        "EntityBase::doGetRandomBetterWeapon()\n" +
-                                "$coordinates - $nameWithJob - ($oldWeapon -> ${newWeapon.name})",
-                        DebugMessageType.ENTITY_FIND_WEAPON
-                    )
-                    sendToAll(this)
-                }
-            } ?: doNothing()
-    }
-
-    private fun doGetRandomBetterArmor() {
-        val sb = StringBuilder()
-
-        body.parts.forEach { bodyPart ->
-            (inventory.getAndRemoveBetterArmorOrNull(bodyPart)
-                ?: currentRoom.getAndRemoveBetterArmorOrNull(bodyPart))?.let { newArmor ->
-                bodyPart.equippedItem?.let { oldArmor ->
-                    currentRoom.addItem(oldArmor)
-                    sb.appendLine(unequipAndDropString(oldArmor))
-                }
-
-                // used for debug string; not used elsewhere
-                val oldArmor = "[${bodyPart.slot}] ${bodyPart.equippedItem?.name ?: "nothing"}"
-
-                bodyPart.equippedItem = newArmor
-                sb.appendLine(pickUpAndEquip(newArmor))
-
-                Debug.println(
-                    "EntityBase::doGetRandomBetterArmor()\n" +
-                            "$coordinates - $nameWithJob - ($oldArmor -> ${newArmor.name})",
-                    DebugMessageType.ENTITY_FIND_ARMOR
-                )
-
-                Debug.println(sb, DebugMessageType.ECHO_MESSAGE)
-                sendToAll(sb)
-
-                // just do one replacement
-                return
-            }
-        }
-    }
-
-    private fun foundBetterArmor() =
-        body.parts.any { bodyPart ->
-            foundBetterArmor(bodyPart)
-        }
-
-    private fun foundBetterArmor(bodyPart: EntityBodyPart) =
-        inventory.containsBetterArmor(bodyPart) ||
-                currentRoom.containsBetterArmor(bodyPart)
-
-
-    private fun foundBetterWeapon() =
-        (inventory.getBestWeaponOrNull() ?: currentRoom.getBestWeaponOrNull())?.let { bestWeapon ->
-            weapon?.let { myWeapon ->
-                myWeapon.power < bestWeapon.power
-            } ?: true // found a weapon, and I have nothing equipped
-        } ?: false // didn't find a weapon
     // endregion
 
     // region posture
@@ -725,8 +559,8 @@ abstract class EntityBase(
             EntityAction.ATTACK_PLAYER -> doAttackPlayer()
             EntityAction.ATTACK_RANDOM_LIVING_HOSTILE -> doAttackRandomLivingHostile()
             EntityAction.SEARCH_RANDOM_UNSEARCHED_DEAD_HOSTILE -> doSearchRandomUnsearchedDeadHostile()
-            EntityAction.FIND_AND_EQUIP_ANY_WEAPON -> doFindAndEquipAnyWeapon()
-            EntityAction.FIND_AND_EQUIP_ANY_ARMOR -> doFindAndEquipAnyArmor()
+            EntityAction.FIND_AND_EQUIP_RANDOM_WEAPON -> doFindAndEquipRandomWeapon()
+            EntityAction.FIND_AND_EQUIP_RANDOM_ARMOR -> doFindAndEquipRandomArmor()
             EntityAction.GET_VALUABLE_ITEM -> doGetValuableItem()
             EntityAction.GET_ANY_ITEM -> doGetAndRemoveRandomItem()
             EntityAction.DESTROY_ANY_ITEM -> doRemoveRandomItem()
@@ -778,23 +612,23 @@ abstract class EntityBase(
                         Messages.get(
                             // x casts spell on themselves
                             Message.ENTITY_CASTS_SPELL_ON_SELF,
-                            capitalizedPrefixedRandomName,
+                            names.capitalizedPrefixedRandom(),
                             spell.name
                         )
                     } else {
                         Messages.get(
                             // messaging: x casts spell on y
                             Message.ENTITY_CASTS_SPELL_ON_ENTITY,
-                            capitalizedPrefixedRandomName,
+                            names.capitalizedPrefixedRandom(),
                             spell.name,
-                            target.prefixedRandomName
+                            target.names.prefixedRandom()
                         )
                     }
                 } ?: Messages.get(
                     // TODO: no spells to test this on yet;
                     //  is this good enough?
                     //  what about when spells affect a room and/or multiple entities?
-                    Message.ENTITY_CASTS_SPELL, capitalizedPrefixedRandomName, spell.name
+                    Message.ENTITY_CASTS_SPELL, names.capitalizedPrefixedRandom(), spell.name
                 )
             )
 
@@ -813,7 +647,7 @@ abstract class EntityBase(
 
                 Debug.println(
                     "EntityBase::doCastSpell()\n" +
-                            "$coordinates - $nameWithJob - ${spell.name} - ${it.nameWithJob} " +
+                            "$coordinates - ${names.withJob} - ${spell.name} - ${it.names.withJob} " +
                             "[$strength strength, ${it.attributes.currentHealth} health left]",
                     DebugMessageType.ENTITY_CAST_SPELL
                 )
@@ -835,12 +669,12 @@ abstract class EntityBase(
     private fun processRestoreHealth(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
         // <target> is healed for <effect.strength>
         target.attributes.currentHealth += effect.strength
-        sb.appendLine(Message.ENTITY_IS_HEALED, target.prefixedRandomName, effect.strength.toString())
+        sb.appendLine(Message.ENTITY_IS_HEALED, target.names.prefixedRandom(), effect.strength.toString())
     }
 
     private fun processFireDamage(effect: SpellEffect, target: EntityBase, sb: StringBuilder) {
         target.attributes.currentHealth -= effect.strength
-        sb.appendLine(Message.FIREBALL_HURTLES_AT_ENTITY, target.prefixedRandomName, effect.strength.toString())
+        sb.appendLine(Message.FIREBALL_HURTLES_AT_ENTITY, target.names.prefixedRandom(), effect.strength.toString())
     }
 
     private fun doEatRandomFoodItem() =
@@ -849,7 +683,7 @@ abstract class EntityBase(
                 appendLine(
                     Messages.get(
                         Message.ENTITY_EATS_FOOD_FROM_INVENTORY,
-                        prefixedRandomName,
+                        names.prefixedRandom(),
                         foodFromInventory.name
                     )
                 )
@@ -863,7 +697,7 @@ abstract class EntityBase(
             }
         } ?: currentRoom.getRandomFoodOrNull()?.let { foodFromRoom ->
             with(StringBuilder()) {
-                appendLine(Message.ENTITY_EATS_FOOD_ON_GROUND, prefixedRandomName, foodFromRoom.name)
+                appendLine(Message.ENTITY_EATS_FOOD_ON_GROUND, names.prefixedRandom(), foodFromRoom.name)
 
                 if (--foodFromRoom.bites == 0) {
                     appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
@@ -880,7 +714,7 @@ abstract class EntityBase(
                 appendLine(
                     Messages.get(
                         Message.ENTITY_DRINKS_DRINK_FROM_INVENTORY,
-                        prefixedRandomName,
+                        names.prefixedRandom(),
                         drinkFromInventory.name
                     )
                 )
@@ -894,7 +728,7 @@ abstract class EntityBase(
             }
         } ?: currentRoom.getRandomDrinkOrNull()?.let { drinkFromRoom ->
             with(StringBuilder()) {
-                appendLine(Message.ENTITY_DRINKS_DRINK_ON_GROUND, prefixedRandomName, drinkFromRoom.name)
+                appendLine(Message.ENTITY_DRINKS_DRINK_ON_GROUND, names.prefixedRandom(), drinkFromRoom.name)
 
                 if (--drinkFromRoom.quaffs == 0) {
                     appendLine(Message.FOOD_OR_DRINK_LAST_OF_IT)
@@ -911,7 +745,7 @@ abstract class EntityBase(
             FlavorText.get(EntityAction.IDLE_FLAVOR_ACTION)
                 .replace(
                     oldValue = "capitalizedConversationalName",
-                    newValue = capitalizedConversationalName
+                    newValue = names.capitalizedConversational
                 )
         )
 
@@ -1014,10 +848,20 @@ abstract class EntityBase(
     private fun isAlone() = currentRoom.entities.size == 1
     // endregion
 
-    // region init/cleanup
+    // region init
+    suspend fun goLiveYourLifeAndBeFree(initialRoom: Room) {
+        doInit(initialRoom)
+
+        while (hasNotBeenSearched && Game.running) {
+            doDelay()
+            doAction()
+        }
+
+        doFinalCleanup()
+    }
     private fun doInit(initialRoom: Room) {
         Debug.println(
-            "EntityBase::doInit() - adding $fullName to ${initialRoom.coordinates}",
+            "EntityBase::doInit() - adding ${names.full} to ${initialRoom.coordinates}",
             DebugMessageType.ENTITY_ADD_TO_ROOM
         )
 
@@ -1026,25 +870,172 @@ abstract class EntityBase(
         currentRoom.addEntity(this)
     }
 
-    private fun doFinalCleanup() {
-        sendToAll(Message.DEAD_ENTITY_DECAYS, finalCleanupName)
-        currentRoom.removeEntity(this)
+    suspend fun naturalHealthRestoration() {
+        while (isAlive && Game.running) {
+            if (attributes.currentHealth < attributes.maximumHealth) {
+                val old = "${attributes.currentHealth}/${attributes.maximumHealth}"
+                val new =
+                    "${attributes.currentHealth + attributes.naturalHealthRestorationRate}/${attributes.maximumHealth}"
+                Debug.println(
+                    "Natural health restoration $name: $old -> $new",
+                    DebugMessageType.ENTITY_PASSIVE_EFFECT
+                )
+            }
+            attributes.currentHealth += attributes.naturalHealthRestorationRate
+            doDelay()
+        }
     }
 
-    private fun canCastSpellWithEffectType(effectType: SpellEffectType): Boolean {
-        val canICastThis = spells.any {
-            with(Spells[it]) {
-                hasEffectType(effectType) && hasEnoughMagicToCast(this)
+    suspend fun naturalMagicRestoration() {
+        while (isAlive && Game.running) {
+            if (attributes.currentMagic < attributes.maximumMagic) {
+                val old = "${attributes.currentMagic}/${attributes.maximumMagic}"
+                val new =
+                    "${attributes.currentMagic + attributes.naturalMagicRestorationRate}/${attributes.maximumMagic}"
+                Debug.println(
+                    "Natural magic restoration $name: $old -> $new",
+                    DebugMessageType.ENTITY_PASSIVE_EFFECT
+                )
+            }
+            attributes.currentMagic += attributes.naturalMagicRestorationRate
+            doDelay()
+        }
+    }
+
+// endregion
+
+    // region cleanup
+    private fun doFinalCleanup() {
+        sendToAll(Message.DEAD_ENTITY_DECAYS, names.finalCleanup)
+        currentRoom.removeEntity(this)
+    }    // endregion
+
+    // region equip weapon
+    private fun doFindAndEquipRandomWeapon() =
+        // check personal inventory first
+        (inventory.getAndRemoveRandomWeaponOrNull()
+        // check room next
+            ?: currentRoom.getAndRemoveRandomWeaponOrNull())?.let { foundWeapon ->
+            with(StringBuilder()) {
+                weapon?.let { oldWeapon ->
+                    appendLine(dropString(oldWeapon))
+                    currentRoom.addItem(oldWeapon)
+                }
+
+                weapon = foundWeapon
+
+                d100(10) {
+                    appendLine(say(FlavorText.get(EntityAction.GET_ANY_ITEM)))
+                }
+                appendLine(equipString(foundWeapon))
+                sendToAll(this)
+            }
+        } ?: doNothing()
+
+    private fun doGetRandomBetterWeapon() {
+        (inventory.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0)
+            ?: currentRoom.getAndRemoveRandomBetterWeaponOrNull(weapon?.power?.plus(1) ?: 0))
+            ?.let { newWeapon ->
+                with(StringBuilder()) {
+                    weapon?.let { oldWeapon ->
+                        appendLine(dropString(oldWeapon))
+                        currentRoom.addItem(oldWeapon)
+                    }
+
+                    val oldWeapon = "[weapon] ${weapon?.name ?: "nothing"}"
+
+                    weapon = newWeapon
+                    appendLine(getString(newWeapon))
+
+                    Debug.println(
+                        "EntityBase::doGetRandomBetterWeapon()\n" +
+                                "$coordinates - ${names.withJob} - ($oldWeapon -> ${newWeapon.name})",
+                        DebugMessageType.ENTITY_FIND_WEAPON
+                    )
+                    sendToAll(this)
+                }
+            } ?: doNothing()
+    }
+
+    private fun foundBetterWeapon() =
+        (inventory.getBestWeaponOrNull() ?: currentRoom.getBestWeaponOrNull())?.let { bestWeapon ->
+            weapon?.let { myWeapon ->
+                myWeapon.power < bestWeapon.power
+            } ?: true // found a weapon, and I have nothing equipped
+        } ?: false // didn't find a weapon
+    // endregion
+
+    // region equip armor
+    private fun findRandomArmorOrNull(bodyPart: EntityBodyPart) =
+        (inventory.getAndRemoveRandomArmorOrNull(bodyPart)
+            ?: currentRoom.getAndRemoveRandomArmorOrNull(bodyPart))
+
+    private fun doFindAndEquipRandomArmor() =
+        body.parts.forEach { bodyPart ->
+            findRandomArmorOrNull(bodyPart)?.let { newArmor ->
+                bodyPart.equippedItem?.let { oldArmor ->
+                    sendToAll(unequipAndDropString(oldArmor))
+                    currentRoom.addItem(oldArmor)
+                }
+
+                // debug only
+                val oldArmor = "[${bodyPart.slot}] ${bodyPart.equippedItem?.name ?: "nothing"}"
+
+                bodyPart.equippedItem = newArmor
+
+                Debug.println(
+                    "EntityBase::doFindAndEquipAnyArmor()\n" +
+                            "$coordinates - ${names.withJob} - ($oldArmor -> ${newArmor.name})",
+                    DebugMessageType.ENTITY_FIND_WEAPON
+                )
+
+                // TODO: consider flavor text
+                // say(FlavorText.get(EntityAction.GET_ANY_ITEM))
+                sendToAll(pickUpAndEquip(newArmor))
             }
         }
 
-        Debug.println("Do I have $effectType: $canICastThis", DebugMessageType.ENTITY_CHECK_FOR_MAGIC_EFFECT)
-        return canICastThis
-    }
+    private fun foundBetterArmor() =
+        body.parts.any { bodyPart ->
+            foundBetterArmor(bodyPart)
+        }
 
-    private fun hasEnoughMagicToCast(spell: Spell) =
-        attributes.currentMagic >= spell.cost
-// endregion
+    private fun foundBetterArmor(bodyPart: EntityBodyPart) =
+        inventory.containsBetterArmor(bodyPart) ||
+                currentRoom.containsBetterArmor(bodyPart)
+
+    private fun doGetRandomBetterArmor() {
+        val sb = StringBuilder()
+
+        body.parts.forEach { bodyPart ->
+            (inventory.getAndRemoveBetterArmorOrNull(bodyPart)
+                ?: currentRoom.getAndRemoveBetterArmorOrNull(bodyPart))?.let { newArmor ->
+                bodyPart.equippedItem?.let { oldArmor ->
+                    currentRoom.addItem(oldArmor)
+                    sb.appendLine(unequipAndDropString(oldArmor))
+                }
+
+                // used for debug string; not used elsewhere
+                val oldArmor = "[${bodyPart.slot}] ${bodyPart.equippedItem?.name ?: "nothing"}"
+
+                bodyPart.equippedItem = newArmor
+                sb.appendLine(pickUpAndEquip(newArmor))
+
+                Debug.println(
+                    "EntityBase::doGetRandomBetterArmor()\n" +
+                            "$coordinates - ${names.withJob} - ($oldArmor -> ${newArmor.name})",
+                    DebugMessageType.ENTITY_FIND_ARMOR
+                )
+
+                Debug.println(sb, DebugMessageType.ECHO_MESSAGE)
+                sendToAll(sb)
+
+                // just do one replacement
+                return
+            }
+        }
+    }
+    // endregion
 }
 
 // entity has a creature type (HUMANOID, SPIDER, etc.)

@@ -1,4 +1,4 @@
-package engine.entity
+package engine.entity.faction
 
 enum class EntityFactions {
     NPC,

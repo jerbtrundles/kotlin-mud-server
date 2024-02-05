@@ -1,9 +1,7 @@
 package engine.world.template
 
 import com.beust.klaxon.Json
-import engine.entity.EntityManager
-import engine.entity.EntityMonsterTemplate
-import engine.entity.MonsterTemplates
+import engine.entity.template.MonsterTemplates
 import engine.world.Region
 
 class RegionTemplate(

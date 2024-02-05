@@ -1,4 +1,4 @@
-package engine.entity
+package engine.entity.attributes
 
 enum class EntityPosture {
     STANDING,

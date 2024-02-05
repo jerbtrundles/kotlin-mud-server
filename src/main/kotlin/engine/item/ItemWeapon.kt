@@ -8,7 +8,8 @@ class ItemWeapon(
     weight: Double,
     value: Int,
     keywords: List<String>,
-    val power: Int
+    val power: Int,
+    val weaponType: ItemWeaponType
 ) : ItemBase(name, description, weight, value, keywords) {
     constructor(template: ItemTemplateWeapon): this(
         template.name,
@@ -16,6 +17,7 @@ class ItemWeapon(
         template.weight,
         template.value,
         template.keywords,
-        template.power
+        template.power,
+        template.weaponType
     )
 }

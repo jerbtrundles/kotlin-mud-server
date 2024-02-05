@@ -1,6 +1,6 @@
 package engine
 
-import engine.entity.EntityBase
+import engine.entity.core.EntityBase
 import engine.game.Game
 import engine.player.Player
 
@@ -20,7 +20,7 @@ class Story(
 
     private fun playNext(player: Player, speaker: EntityBase) {
         if (!isDone()) {
-            player.sendToMe("${speaker.nameForStory} says \"${parts[index++]}\"")
+            player.sendToMe("${speaker.names.story} says \"${parts[index++]}\"")
         }
     }
 

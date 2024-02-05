@@ -1,4 +1,4 @@
-package engine.entity
+package engine.entity.template
 
 import debug.Debug
 import engine.utility.Common

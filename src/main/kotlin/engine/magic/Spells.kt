@@ -30,4 +30,18 @@ object Spells {
             )
         }
     }
+
+    val healer =
+        mutableListOf(
+            "minor heal",
+            "minor hurt",
+            "cure poison"
+        )
+
+    val wizard =
+        mutableListOf(
+            "minor fire",
+            "minor ice",
+            "minor bolt"
+        )
 }

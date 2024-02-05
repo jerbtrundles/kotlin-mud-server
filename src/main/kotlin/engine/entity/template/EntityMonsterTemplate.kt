@@ -1,8 +1,9 @@
-package engine.entity
+package engine.entity.template
 
 import com.beust.klaxon.Json
 import engine.Inventory
-import engine.item.template.ItemTemplates
+import engine.entity.attributes.EntityAttributes
+import engine.entity.core.EntityMonster
 
 class EntityMonsterTemplate(
     @Json(name = "name")

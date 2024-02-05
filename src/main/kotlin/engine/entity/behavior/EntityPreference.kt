@@ -20,12 +20,12 @@ class EntityPreference(
         val defaultPreferenceQuipLikeABoss = EntityPreference(
             EntitySituation.NOT_ALONE, EntityAction.QUIP_TO_RANDOM_ENTITY
         )
-        val defaultPreferenceFindAnyWeaponIfNoneEquipped = EntityPreference(
+        val defaultPreferenceFindRandomWeaponIfNoneEquipped = EntityPreference(
             listOf(
                 EntitySituation.NO_EQUIPPED_WEAPON,
                 EntitySituation.INVENTORY_OR_CURRENT_ROOM_CONTAINS_WEAPON
             ),
-            EntityAction.FIND_AND_EQUIP_ANY_WEAPON
+            EntityAction.FIND_AND_EQUIP_RANDOM_WEAPON
         )
         val defaultPreferenceHealFriendly = EntityPreference(
             listOf(

@@ -1,9 +1,11 @@
 package engine.world
 
 import engine.*
-import engine.entity.*
+import engine.entity.core.EntityBase
 import engine.entity.behavior.EntitySituation
 import engine.entity.body.EntityBodyPart
+import engine.entity.faction.EntityFaction
+import engine.entity.faction.EntityFactions
 import engine.utility.Common
 import engine.player.Player
 import engine.game.GameInput
@@ -40,7 +42,7 @@ open class Room(
     fun containsNoEntities() =
         entities.isEmpty() && players.isEmpty()
 
-    fun containsLivingPlayer() = players.any { it.isAlive }
+    fun containsLivingPlayer() = players.any { it.isAlive() }
     fun containsLivingEntity() = entities.any { it.isAlive }
 
     fun addEntity(entity: EntityBase) {
@@ -150,7 +152,7 @@ open class Room(
         }
 
     fun randomLivingPlayerOrNull() =
-        players.filter { it.isAlive }.randomOrNull()
+        players.filter { it.isAlive() }.randomOrNull()
     // endregion
 
     // region entities

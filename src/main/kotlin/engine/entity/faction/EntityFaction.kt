@@ -1,4 +1,4 @@
-package engine.entity
+package engine.entity.faction
 
 class EntityFaction(
     val id: EntityFactions,

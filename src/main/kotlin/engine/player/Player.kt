@@ -4,9 +4,9 @@ import debug.Debug
 import engine.Inventory
 import engine.Message
 import engine.Messages
-import engine.entity.EntityAttributes
-import engine.entity.EntityFaction
-import engine.entity.EntityPosture
+import engine.entity.attributes.EntityAttributes
+import engine.entity.faction.EntityFaction
+import engine.entity.attributes.EntityPosture
 import engine.entity.body.EntityBody
 import engine.game.Game
 import engine.game.GameInput
@@ -23,37 +23,69 @@ class Player(
     private val webSocketSession: DefaultWebSocketSession
 ) {
     val attributes = EntityAttributes.player
-    var coordinates = WorldCoordinates("town", 0, 0)
-    var level = 1
-    var experience = 0
-    val currentRoom
-        get() = World.getRoomFromCoordinates(coordinates)!!
-    var posture = EntityPosture.STANDING
-    val inventory: Inventory = Inventory()
-    var weapon: ItemWeapon? = null
-    val body: EntityBody = EntityBody.humanoid()
-
     val faction = EntityFaction.factionPlayer
-
-    var gold = 0
-    var bankAccountBalance = 100
-    val bankAccountBalanceString
-        get() = Messages.get(Message.PLAYER_BANK_ACCOUNT_BALANCE, bankAccountBalance.toString())
-
-    val isAlive
-        get() = attributes.currentHealth > 0
-
+    val body: EntityBody = EntityBody.humanoid()
+    val inventory: Inventory = Inventory()
     val arriveString = "$name has arrived."
+
+    var coordinates = WorldCoordinates("town", 0, 0)
+    private val currentRoom
+        get() = World.getRoomFromCoordinates(coordinates)!!
+
+    private var posture = EntityPosture.STANDING
+    private var weapon: ItemWeapon? = null
+
+    var level = 1
+    private var experience = 0
+    private var gold = 0
+    private var bankAccountBalance = 100
+
+    fun isAlive() = attributes.currentHealth > 0
+
+    // region strings
     val healthString
         get() = "${attributes.healthString}\n${attributes.magicString}"
     val inventoryString
         get() = if (inventory.items.isEmpty()) {
             Messages.get(Message.PLAYER_NOT_CARRYING_ANYTHING)
         } else {
-            "You are carrying ${inventory.collectionString}."
+            Messages.get(Message.PLAYER_INVENTORY, inventory.collectionString)
         }
     val goldString
         get() = Messages.get(Message.PLAYER_CURRENT_GOLD, gold.toString())
+    val bankAccountBalanceString
+        get() = Messages.get(Message.PLAYER_BANK_ACCOUNT_BALANCE, bankAccountBalance.toString())
+
+    fun departString(connection: Connection) =
+        if (connection.direction != MovementDirection.NONE) {
+            // The goblin heads east.
+            "$name heads ${connection.direction.toString().lowercase()}."
+        } else if (connection.matchInputString.contains("gates")) {
+            // TODO: make this better
+            // TODO: other cases for climbing, other connection types
+            // TODO: The goblin heads through the gates.
+            "$name heads through the town gates."
+        } else {
+            // TODO: make this better
+            "$name heads over to the ${connection.matchInput.suffix}."
+        }
+    // endregion
+
+    // region client strings
+    private fun sendCurrentRoomString() {
+        val region = World.regions[coordinates.region]!!
+        val subregion = region.subregions[coordinates.subregion]
+        val room = subregion.rooms[coordinates.room]
+
+        val message = "ROOM:" + Messages.get(
+            Message.LOOK_CURRENT_ROOM,
+            region.displayString,
+            subregion.displayString,
+            room.roomString
+        )
+        sendToMe(message)
+    }
+    // endregion
 
     // region move
     private fun doMove(gameInput: GameInput) =
@@ -69,40 +101,12 @@ class Player(
         } ?: doUnknown()
     // endregion
 
-    private fun sendCurrentRoomString() {
-        val region = World.regions[coordinates.region]!!
-        val subregion = region.subregions[coordinates.subregion]
-        val room = subregion.rooms[coordinates.room]
-
-        val message = "ROOM:" + Messages.get(
-            Message.LOOK_CURRENT_ROOM,
-            region.displayString,
-            subregion.displayString,
-            room.roomString
-        )
-        sendToMe(message)
-    }
-
-    fun departString(connection: Connection) =
-        if (connection.direction != MovementDirection.NONE) {
-            // The goblin heads east.
-            "$name heads ${connection.direction.toString().lowercase()}."
-        } else if (connection.matchInputString.contains("gates")) {
-            // TODO: make this better
-            // TODO: other cases for climbing, other connection types
-            // TODO: The goblin heads through the gates.
-            "$name heads through the town gates."
-        } else {
-            // TODO: make this better
-            "$name heads over to the ${connection.matchInput.suffix}."
-        }
-
+    // region look
     fun doInitialLook() {
         sendCurrentRoomString()
         doLook()
     }
 
-    // region look
     private fun doLook(gameInput: GameInput? = null) =
         gameInput?.run {
             when (gameInput.words.size) {
@@ -148,7 +152,7 @@ class Player(
     }
     // endregion
 
-    // region player posture
+    // region posture
     private fun doStand() =
         if (posture == EntityPosture.STANDING) {
             sendToMe(Message.PLAYER_ALREADY_STANDING)
@@ -439,9 +443,7 @@ class Player(
                 sendToOthers(othersMessage, name, armor.name)
             }
         }
-
-
-// endregion
+    // endregion
 
     // region attack/search entities
     private fun doAttack(gameInput: GameInput) {
@@ -501,7 +503,7 @@ class Player(
                 with(
                     Messages.get(
                         Message.ENTITY_DROPS_ITEM,
-                        deadHostile.prefixedFullName,
+                        deadHostile.names.prefixedFull,
                         deadHostile.inventory.collectionString
                     )
                 ) {
@@ -513,40 +515,9 @@ class Player(
             sendToMe(toMe.toString())
             sendToOthers(toOthers.toString())
         } ?: doUnknown()
-// endregion
+    // endregion
 
-    // region shops
-    private fun doSellItem(gameInput: GameInput) =
-        (currentRoom as? RoomShop)?.let {
-            inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let { itemToSell ->
-                inventory.items.remove(itemToSell)
-                gold += itemToSell.sellValue
-
-                with(StringBuilder()) {
-                    appendLine(Message.PLAYER_SELLS_ITEM_TO_MERCHANT, itemToSell.name, itemToSell.sellValue.toString())
-                    appendLine(goldString)
-                    sendToMe(this)
-                }
-
-                sendToOthers(Message.OTHER_ENTITY_DOES_COMMERCE)
-            } ?: doUnknown()
-        } ?: doRoomIsNotShop()
-
-    private fun doListItems() =
-        (currentRoom as? RoomShop)?.let { shop ->
-            sendToMe(shop.itemsString)
-        } ?: doRoomIsNotShop()
-
-    private fun doRoomIsNotShop() = sendToMe(Message.PLAYER_ROOM_IS_NOT_SHOP)
-    private fun doRoomIsNotBank() = sendToMe(Message.PLAYER_ROOM_IS_NOT_BANK)
-
-    private fun doPriceItem(gameInput: GameInput) =
-        (currentRoom as? RoomShop)?.run {
-            inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let {
-                sendToMe(Message.PLAYER_CAN_SELL_ITEM_HERE, it.name, it.sellValue.toString())
-            } ?: doUnknown()
-        } ?: doRoomIsNotShop()
-
+    // region shop actions
     private fun doBuyItem(gameInput: GameInput) =
         // TODO: messaging to other players
         (currentRoom as? RoomShop)?.let { shop ->
@@ -571,8 +542,40 @@ class Player(
                 }
             } ?: doUnknown()
         } ?: doRoomIsNotShop()
-// endregion
 
+    private fun doSellItem(gameInput: GameInput) =
+        (currentRoom as? RoomShop)?.let {
+            inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let { itemToSell ->
+                inventory.items.remove(itemToSell)
+                gold += itemToSell.sellValue
+
+                with(StringBuilder()) {
+                    appendLine(Message.PLAYER_SELLS_ITEM_TO_MERCHANT, itemToSell.name, itemToSell.sellValue.toString())
+                    appendLine(goldString)
+                    sendToMe(this)
+                }
+
+                sendToOthers(Message.OTHER_ENTITY_DOES_COMMERCE)
+            } ?: doUnknown()
+        } ?: doRoomIsNotShop()
+
+    private fun doListItems() =
+        (currentRoom as? RoomShop)?.let { shop ->
+            sendToMe(shop.itemsString)
+        } ?: doRoomIsNotShop()
+
+    private fun doPriceItem(gameInput: GameInput) =
+        (currentRoom as? RoomShop)?.run {
+            inventory.getItemWithKeywordOrNull(gameInput.suffix)?.let {
+                sendToMe(Message.PLAYER_CAN_SELL_ITEM_HERE, it.name, it.sellValue.toString())
+            } ?: doUnknown()
+        } ?: doRoomIsNotShop()
+
+    private fun doRoomIsNotShop() = sendToMe(Message.PLAYER_ROOM_IS_NOT_SHOP)
+    private fun doRoomIsNotBank() = sendToMe(Message.PLAYER_ROOM_IS_NOT_BANK)
+    // endregion
+
+    // region bank actions
     private fun doDepositMoney(gameInput: GameInput) =
         (currentRoom as? RoomBank)?.run {
             when (gameInput.words.size) {
@@ -632,17 +635,9 @@ class Player(
             sendToMe(bankAccountBalanceString)
             sendToOthers(Message.OTHER_ENTITY_DOES_BANKING)
         } ?: doRoomIsNotBank()
+    // endregion
 
-    private fun doAssess(gameInput: GameInput) =
-        when (gameInput.words.size) {
-            1 -> doUnknown()
-            2 -> currentRoom.firstHostileToPlayerOrNull(gameInput.suffix)?.let { hostile ->
-                Debug.assessSituations(this, hostile)
-            } ?: doUnknown()
-
-            else -> doUnknown()
-        }
-
+    // region route input
     fun onInput(input: String) = onInput(GameInput(input))
     fun onInput(gameInput: GameInput) {
         when (gameInput.action) {
@@ -694,7 +689,9 @@ class Player(
             else -> doUnknown()
         }
     }
+    // endregion
 
+    // region send messages
     fun sendToMe(message: Message, vararg tokens: String) =
         sendToMe(Messages.get(message, *tokens))
 
@@ -719,10 +716,31 @@ class Player(
 
     fun sendToOthers(sb: StringBuilder) =
         sendToOthers(sb.trim('\n').toString())
+    // endregion
 
+    // region equals / hashCode
     override fun equals(other: Any?) =
         when {
             other is Player -> other.webSocketSession == webSocketSession
             else -> false
         }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + webSocketSession.hashCode()
+        return result
+    }
+    // endregion
+
+    // region debug
+    private fun doAssess(gameInput: GameInput) =
+        when (gameInput.words.size) {
+            1 -> doUnknown()
+            2 -> currentRoom.firstHostileToPlayerOrNull(gameInput.suffix)?.let { hostile ->
+                Debug.assessSituations(this, hostile)
+            } ?: doUnknown()
+
+            else -> doUnknown()
+        }
+    // endregion
 }

@@ -1,12 +1,15 @@
-package engine.entity
+package engine.entity.core
 
 import engine.Inventory
+import engine.entity.attributes.EntityAttributes
+import engine.entity.attributes.EntityClass
 import engine.utility.Common
 import engine.entity.behavior.EntityBehavior
+import engine.entity.template.EntityMonsterTemplate
 import engine.game.Game
 import engine.item.ItemWeapon
 import engine.item.template.ItemTemplates
-import engine.magic.Spell
+import engine.magic.Spells
 import engine.world.Region
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
@@ -45,23 +48,42 @@ class EntityManager(
         withContext(context) {
             while (Game.running) {
                 addMonsters(this)
-                Game.delay(2000)
-                addNpcs(this)
-                Game.delay(2000)
-                addJanitors(this)
-                Game.delay(2000)
-                addHealers(this)
-                Game.delay(2000)
-                addWizards(this)
-                Game.delay(2000)
-                addFarmers(this)
-                Game.delay(2000)
-                launch { removeSearchedEntities(allMonsters) }
-                Game.delay(2000)
-                launch { removeSearchedEntities(allNpcs) }
-                Game.delay(2000)
-                launch { removeSearchedEntities(allJanitors) }
-                Game.delay(2000)
+
+                if(Game.running) {
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    addNpcs(this)
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    addJanitors(this)
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    addHealers(this)
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    addWizards(this)
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    addFarmers(this)
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    launch { removeSearchedEntities(allMonsters) }
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    launch { removeSearchedEntities(allNpcs) }
+                    Game.delay(2000)
+                }
+                if (Game.running) {
+                    launch { removeSearchedEntities(allJanitors) }
+                    Game.delay(2000)
+                }
             }
         }
 
@@ -76,7 +98,7 @@ class EntityManager(
         EntityFriendlyNpc(
             name = allNpcNames.random(),
             level = 1,
-            job = allNpcJobs.random(),
+            entityClass = EntityClass.PEASANT,
             behavior = EntityBehavior.defaultNpc,
             inventory = Inventory.defaultNpc()
         )
@@ -85,35 +107,27 @@ class EntityManager(
         EntityFriendlyNpc(
             name = allNpcNames.random(),
             level = 1,
-            job = "healer",
+            entityClass = EntityClass.HEALER,
             behavior = EntityBehavior.healer,
-            spells = mutableListOf(
-                "minor heal",
-                "minor hurt",
-                "cure poison"
-            )
+            spells = Spells.healer
         )
 
     private fun createWizard() =
         EntityFriendlyNpc(
             name = allNpcNames.random(),
             level = 1,
-            job = "wizard",
+            entityClass = EntityClass.WIZARD,
             behavior = EntityBehavior.wizard,
-            spells = mutableListOf(
-                "minor fire",
-                "minor ice",
-                "minor bolt"
-            )
+            spells = Spells.wizard
         )
 
     private fun createJanitor() =
         EntityFriendlyNpc(
             name = allNpcNames.random(),
             level = 1,
-            job = "janitor",
+            entityClass = EntityClass.JANITOR,
             behavior = EntityBehavior.janitor,
-            arriveStringSuffix = "arrives, broom in hand",
+            arriveSuffix = "arrives, broom in hand",
             delayMin = 500,
             delayMax = 1000,
             weapon = ItemTemplates.createItemFromString("broom") as ItemWeapon
@@ -123,7 +137,7 @@ class EntityManager(
         EntityFriendlyNpc(
             name = allNpcNames.random(),
             level = 1,
-            job = "farmer",
+            entityClass = EntityClass.FARMER,
             behavior = EntityBehavior.farmer,
             delayMin = 500,
             delayMax = 1000,
@@ -135,9 +149,9 @@ class EntityManager(
         EntityFriendlyNpc(
             name = allNpcNames.random(),
             level = 1,
-            job = "berserker",
+            entityClass = EntityClass.BERSERKER,
             behavior = EntityBehavior.berserker,
-            arriveStringSuffix = "storms in",
+            arriveSuffix = "storms in",
             attributes = EntityAttributes.defaultBerserker
         )
 
@@ -165,8 +179,10 @@ class EntityManager(
 
     private suspend fun addHealers(scope: CoroutineScope) =
         addEntities(allHealers, maxHealers, scope, ::createHealer)
+
     private suspend fun addWizards(scope: CoroutineScope) =
         addEntities(allWizards, maxWizards, scope, ::createWizard)
+
     private suspend fun addFarmers(scope: CoroutineScope) =
         addEntities(allFarmers, maxFarmers, scope, ::createFarmer)
 

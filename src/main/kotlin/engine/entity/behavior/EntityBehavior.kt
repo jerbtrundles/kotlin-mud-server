@@ -1,6 +1,6 @@
 package engine.entity.behavior
 
-import engine.entity.EntityBase
+import engine.entity.core.EntityBase
 import kotlin.random.Random
 
 class EntityBehavior(private val preferences: List<EntityPreference>) {
@@ -13,16 +13,16 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
 //                EntityPreference.defaultPreferenceSearchDeadHostile,
 //                EntityPreference.defaultPreferenceAttackLivingHostile,
 //                EntityPreference.defaultPreferenceFindBetterWeapon,
-                EntityPreference.defaultPreferenceFindBetterArmor
+                EntityPreference.defaultPreferenceFindBetterArmor,
+                EntityPreference.defaultPreferenceEatFood,
+                EntityPreference.defaultPreferenceDrink,
             )
         )
 
         val defaultMonster = EntityBehavior(
             listOf(
-                EntityPreference.defaultPreferenceEatFood,
-                EntityPreference.defaultPreferenceDrink,
                 // EntityPreference.defaultPreferenceQuipLikeABoss,
-                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+                EntityPreference.defaultPreferenceFindRandomWeaponIfNoneEquipped,
                 // EntityPreference.defaultPreferenceAttackPlayer,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
                 EntityPreference.defaultPreferenceAttackLivingHostile,
@@ -35,7 +35,7 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
             listOf(
                 EntityPreference.defaultPreferenceHealFriendly,
                 EntityPreference.defaultPreferenceCastDamageSpellAtLivingHostile,
-                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
+                EntityPreference.defaultPreferenceFindRandomWeaponIfNoneEquipped,
                 EntityPreference.defaultPreferenceFindValuableItem,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
                 EntityPreference.defaultPreferenceAttackLivingHostile,
@@ -46,14 +46,13 @@ class EntityBehavior(private val preferences: List<EntityPreference>) {
 
         val wizard = EntityBehavior(
             listOf(
-//                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
-//                EntityPreference.defaultPreferenceFindValuableItem,
-//                EntityPreference.defaultPreferenceCastFireAtLivingHostile,
                 EntityPreference.defaultPreferenceCastDamageSpellAtLivingHostile,
                 EntityPreference.defaultPreferenceSearchDeadHostile,
-//                EntityPreference.defaultPreferenceAttackLivingHostile,
+                EntityPreference.defaultPreferenceAttackLivingHostile,
+                EntityPreference.defaultPreferenceFindValuableItem,
                 // TODO: wizards would only care about certain kinds of armor
                 //  any class might care about only some types of armor
+//                EntityPreference.defaultPreferenceFindAnyWeaponIfNoneEquipped,
 //                EntityPreference.defaultPreferenceFindBetterWeapon,
 //                EntityPreference.defaultPreferenceFindBetterArmor
             )

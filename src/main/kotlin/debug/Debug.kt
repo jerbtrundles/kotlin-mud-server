@@ -1,7 +1,6 @@
 package debug
 
-import engine.entity.EntityBase
-import engine.entity.behavior.EntityAction
+import engine.entity.core.EntityBase
 import engine.entity.behavior.EntitySituation
 import engine.item.template.ItemTemplates
 import engine.player.Player

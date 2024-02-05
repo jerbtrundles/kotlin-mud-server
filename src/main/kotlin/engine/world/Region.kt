@@ -1,7 +1,7 @@
 package engine.world
 
-import engine.entity.EntityManager
-import engine.entity.EntityMonsterTemplate
+import engine.entity.core.EntityManager
+import engine.entity.template.EntityMonsterTemplate
 import engine.utility.Common
 import engine.world.template.RegionTemplate
 

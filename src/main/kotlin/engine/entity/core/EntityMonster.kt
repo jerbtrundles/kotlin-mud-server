@@ -1,12 +1,15 @@
-package engine.entity
+package engine.entity.core
 
 import GameStats
 import debug.Debug
 import engine.Inventory
+import engine.entity.attributes.EntityAttributes
+import engine.entity.attributes.EntityClass
+import engine.entity.attributes.EntityNames
 import engine.entity.behavior.EntityBehavior
 import engine.entity.body.EntityBody
+import engine.entity.faction.EntityFaction
 import engine.item.ItemWeapon
-import engine.utility.withIndefiniteArticle
 
 class EntityMonster(
     monsterName: String,
@@ -17,7 +20,6 @@ class EntityMonster(
     gold: Int,
     behavior: EntityBehavior = EntityBehavior.defaultMonster,
     weapon: ItemWeapon? = null,
-    namePrefix: String = "The ",
     arriveStringSuffix: String = "has arrived",
     inventory: Inventory = Inventory.defaultMonster(),
     body: EntityBody = EntityBody.critter()
@@ -29,32 +31,17 @@ class EntityMonster(
     attributes = attributes,
     behavior = behavior,
     weapon = weapon,
-    namePrefix = namePrefix,
     experience = experience,
     gold = gold,
+    entityClass = EntityClass.MONSTER,
     actionDelayMin = Debug.monsterDelayMin,
     actionDelayMax = Debug.monsterDelayMax,
-    arriveStringSuffix = arriveStringSuffix,
     inventory = inventory,
     body = body
 ) {
+    override val names = EntityNames.monster(name, arriveStringSuffix)
     override val canTravelBetweenRegions = false
 
-    override val nameWithJob
-        get() = name
-    override val fullName
-        get() = name
-    override val randomName
-        get() = name
-    override val finalCleanupName = "the $name"
-    override val deadConversationalName = "the spirit of $conversationalName"
-    override val arriveName = name.withIndefiniteArticle(capitalized = true)
-    override val deathName = name
-    // "...says to $conversationalName, 'Hello!'"
-    override val conversationalName
-        get() = "the $name"
-
-    override val nameForStory = "The $name"
     override fun calculateAttackPower() =
         attributes.strength + (weapon?.power ?: 0) - Debug.monsterAttackDebuff // debug monster attack debuff
 

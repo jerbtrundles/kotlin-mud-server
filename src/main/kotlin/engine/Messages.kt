@@ -102,6 +102,7 @@ enum class Message {
     PLAYER_LIES_DOWN,
     PLAYER_MISSES,
     PLAYER_NOT_CARRYING_ANYTHING,
+    PLAYER_INVENTORY,
     PLAYER_NOT_ENOUGH_GOLD_TO_BUY_ITEM,
     PLAYER_NOT_ENOUGH_GOLD_TO_DEPOSIT,
     PLAYER_NOT_ENOUGH_GOLD_TO_WITHDRAW,
@@ -215,6 +216,7 @@ object Messages {
             Message.PLAYER_LIES_DOWN -> "You lie down."
             Message.PLAYER_MISSES -> "You miss!"
             Message.PLAYER_NOT_CARRYING_ANYTHING -> "You aren't carrying anything."
+            Message.PLAYER_INVENTORY -> "You are carrying %1."
             Message.PLAYER_NOT_ENOUGH_GOLD_TO_BUY_ITEM -> "You don't have enough gold (%1) to buy the %2 (%3)."
             Message.PLAYER_NOT_ENOUGH_GOLD_TO_DEPOSIT -> "You don't have that much gold to deposit."
             Message.PLAYER_NOT_ENOUGH_GOLD_TO_WITHDRAW -> "You don't have that much gold (%1) in your account to withdraw."

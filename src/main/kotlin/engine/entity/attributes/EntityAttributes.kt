@@ -1,4 +1,4 @@
-package engine.entity
+package engine.entity.attributes
 
 import com.beust.klaxon.Json
 import kotlin.math.max
@@ -15,6 +15,10 @@ class EntityAttributes(
     @Json(name = "magic")
     var maximumMagic: Int = 20,
 ) {
+    // TODO: derive from stats
+    val naturalHealthRestorationRate = 1
+    val naturalMagicRestorationRate = 1
+
     var currentHealth = max(maximumHealth - 10, 1)
         set(value) {
             field = if (value > maximumHealth) {

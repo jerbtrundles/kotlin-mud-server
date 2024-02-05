@@ -1,6 +1,6 @@
 import debug.Debug
-import engine.entity.EntityManager
-import engine.entity.MonsterTemplates
+import engine.entity.core.EntityManager
+import engine.entity.template.MonsterTemplates
 import engine.item.template.ItemTemplates
 import engine.magic.Spells
 import engine.world.World
