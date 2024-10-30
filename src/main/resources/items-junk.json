@@ -1,12 +1,5 @@
 [
   {
-    "name": "ruby",
-    "description": "A sparkling ruby. It's worth a lot.",
-    "weight": 0.1,
-    "value": 250,
-    "keywords": ["ruby"]
-  },
-  {
     "name": "chipped mug",
     "description": "A small ceramic mug with a faded blue color. It has several chips along the rim and handle, but it's still usable.",
     "weight": 0.5,

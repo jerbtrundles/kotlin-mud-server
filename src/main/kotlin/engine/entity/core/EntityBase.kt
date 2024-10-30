@@ -143,7 +143,11 @@ abstract class EntityBase(
         } else {
             // TODO: make this better
             // "$names.prefixedRandom() heads over to the ${connection.matchInput.suffix}."
-            Messages.get(Message.ENTITY_HEADS_OVER_TO_THE_CONNECTION, names.prefixedRandom(), connection.matchInput.suffix)
+            Messages.get(
+                Message.ENTITY_HEADS_OVER_TO_THE_CONNECTION,
+                names.prefixedRandom(),
+                connection.matchInput.suffix
+            )
         }
 
     fun putAwayString(item: ItemBase) =
@@ -170,7 +174,8 @@ abstract class EntityBase(
 
     private fun hasEnoughMagicToCast(spell: Spell) =
         attributes.currentMagic >= spell.cost
-       protected fun doAction() =
+
+    protected fun doAction() =
         if (isDead) {
             doIsDead()
         } else {
@@ -859,6 +864,7 @@ abstract class EntityBase(
 
         doFinalCleanup()
     }
+
     private fun doInit(initialRoom: Room) {
         Debug.println(
             "EntityBase::doInit() - adding ${names.full} to ${initialRoom.coordinates}",

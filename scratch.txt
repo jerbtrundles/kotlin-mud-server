@@ -1,0 +1,11 @@
+talk to x
+ask x for quest
+ask x for task
+
+confirm quest? PendingQuest?
+
+check my quests
+
+quests
+check each npc for one that can give a quest
+return first

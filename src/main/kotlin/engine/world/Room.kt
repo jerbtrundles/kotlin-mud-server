@@ -4,6 +4,7 @@ import engine.*
 import engine.entity.core.EntityBase
 import engine.entity.behavior.EntitySituation
 import engine.entity.body.EntityBodyPart
+import engine.entity.core.EntityFriendlyNpc
 import engine.entity.faction.EntityFaction
 import engine.entity.faction.EntityFactions
 import engine.utility.Common
@@ -292,12 +293,19 @@ open class Room(
     fun matchingConnectionOrNull(gameInput: GameInput) =
         connections.firstOrNull { it.equals(gameInput) }
 
+    fun getRandomFriendlyOrNull(friend: EntityBase) =
+        npcs.firstOrNull { !it.isHostileTo(friend) }
+            ?: monsters.firstOrNull { !it.isHostileTo(friend) }
+
     fun getRandomInjuredFriendlyOrNull(friend: EntityBase) =
         npcs.firstOrNull { !it.isHostileTo(friend) && it.isInSituation(EntitySituation.INJURED_MINOR) }
             ?: monsters.firstOrNull { !it.isHostileTo(friend) && it.isInSituation(EntitySituation.INJURED_MINOR) }
 
     fun containsBetterArmor(bodyPart: EntityBodyPart) =
         inventory.containsBetterArmor(bodyPart)
+
+    fun containsEntity(entity: EntityBase) =
+        entities.contains(entity)
 }
 
 // find an item, item comes with fluff text, maybe a story

@@ -1,4 +1,5 @@
 import debug.Debug
+import engine.ai.AIHelper
 import engine.entity.core.EntityManager
 import engine.entity.template.MonsterTemplates
 import engine.item.template.ItemTemplates
@@ -14,6 +15,8 @@ import plugins.configureRouting
 import plugins.configureSockets
 
 fun main() {
+    return
+
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start()
 

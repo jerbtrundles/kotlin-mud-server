@@ -26,6 +26,7 @@ object Common {
         } else {
             itemStrings.first()
         }
+
     private fun collectionStringTwoItems(itemStrings: List<String>, includeIndefiniteArticles: Boolean) =
         // two items: "an apple and an orange"
         if (includeIndefiniteArticles) {
@@ -33,6 +34,7 @@ object Common {
         } else {
             itemStrings.joinToString(" and ")
         }
+
     private fun collectionStringMoreThanTwoItems(
         itemStrings: List<String>,
         includeIndefiniteArticles: Boolean
@@ -65,4 +67,8 @@ object Common {
             doThis()
         }
     }
+
+    fun <T> listsHaveSameItems(list1: List<T>, list2: List<T>) =
+        list1.size == list2.size
+                && list1.toSet() == list2.toSet()
 }
